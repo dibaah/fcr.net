@@ -1,0 +1,11 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/FCR.Application/FCR.Application.csproj" />
+    <Project Path="src/FCR.Domain/FCR.Domain.csproj" />
+    <Project Path="src/FCR.Infrastructure/FCR.Infrastructure.csproj" />
+    <Project Path="src/FCR.Web/FCR.Web.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/FCR.Tests/FCR.Tests.csproj" />
+  </Folder>
+</Solution>

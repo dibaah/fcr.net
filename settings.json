@@ -1,0 +1,25 @@
+{
+  "company_name": "SINOPEC International — YADAVARAN",
+  "attachment_root": "X:\\1-DC",
+  "backup_location": "backups",
+  "auto_backup_enabled": true,
+  "auto_backup_interval_days": 1,
+  "last_auto_backup": "2026-10-21T21:26:36",
+  "auto_export_enabled": false,
+  "auto_export_location": "exports",
+  "auto_export_interval_days": 2,
+  "last_auto_export": "",
+  "pedec_alert_days": 14,
+  "dark_mode": true,
+  "language": "en",
+  "dept_codes": {
+    "PI": "Piping",
+    "ME": "Mechanical",
+    "IN": "Instrument",
+    "EL": "Electrical",
+    "HV": "HVAC",
+    "CR": "Corrosion",
+    "PR": "Process",
+    "CV": "Civil"
+  }
+}

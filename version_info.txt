@@ -1,0 +1,40 @@
+# UTF-8
+#
+# PyInstaller Windows version resource for FCR Dashboard v2.0.0.
+# Consumed by FCR_Dashboard.spec via EXE(version='version_info.txt').
+#
+# For more details about fixed file info:
+# https://docs.microsoft.com/en-us/windows/win32/menurc/versioninfo-resource
+
+VSVersionInfo(
+  ffi=FixedFileInfo(
+    filevers=(2, 0, 0, 0),
+    prodvers=(2, 0, 0, 0),
+    mask=0x3f,
+    flags=0x0,
+    OS=0x40004,
+    fileType=0x1,
+    subtype=0x0,
+    date=(0, 0)
+  ),
+  kids=[
+    StringFileInfo(
+      [
+        StringTable(
+          u'040904B0',
+          [
+            StringStruct(u'CompanyName', u'SINOPEC International'),
+            StringStruct(u'FileDescription', u'FCR Database Dashboard'),
+            StringStruct(u'FileVersion', u'2.0.0.0'),
+            StringStruct(u'InternalName', u'FCR_Dashboard'),
+            StringStruct(u'LegalCopyright', u'Copyright 2026 Farzad Meshkipour'),
+            StringStruct(u'OriginalFilename', u'FCR_Dashboard.exe'),
+            StringStruct(u'ProductName', u'FCR Dashboard'),
+            StringStruct(u'ProductVersion', u'2.0.0.0')
+          ]
+        )
+      ]
+    ),
+    VarFileInfo([VarStruct(u'Translation', [1033, 1200])])
+  ]
+)

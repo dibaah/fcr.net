@@ -1,0 +1,608 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>FCR Database Dashboard — SINOPEC</title>
+  <link rel="icon" type="image/x-icon" href="/static/icon.ico">
+  <link rel="stylesheet" href="/static/style.css?v=2.0.0">
+  <script src="/static/chart.min.js?v=2.0.0"></script>
+</head>
+<body>
+
+<!-- ═══════════════ LOGIN SCREEN ═══════════════ -->
+<div class="login-screen" id="login-screen">
+  <div class="login-panel" role="dialog" aria-modal="true" aria-labelledby="login-title">
+    <div class="login-brand">
+      <img src="/static/logo.png" alt="SINOPEC" onerror="this.style.display='none'">
+      <div>
+        <h1 id="login-title" data-i18n="app_title">FCR Dashboard</h1>
+        <p data-i18n="company">SINOPEC International — YADAVARAN</p>
+      </div>
+    </div>
+
+    <!-- Startup progress (shown while the backend is preparing) -->
+    <div id="login-startup">
+      <div class="login-copy">
+        <h2 data-i18n="login_welcome">Welcome</h2>
+        <p data-i18n="login_sub">Facility Change Request Control Center</p>
+      </div>
+      <div class="login-progress"><span id="login-progress-bar"></span></div>
+      <p id="login-status" data-i18n="login_starting">Starting local server and preparing database...</p>
+    </div>
+
+    <!-- Sign-in form -->
+    <form id="login-form" class="login-form" novalidate autocomplete="off">
+      <div class="login-copy">
+        <h2 data-i18n="login_signin_title">Sign in</h2>
+        <p data-i18n="login_signin_sub">Use your corporate account to continue</p>
+      </div>
+
+      <label class="login-field">
+        <span data-i18n="login_username">Username</span>
+        <input id="login-user" name="username" type="text" autocomplete="username"
+               spellcheck="false" autocapitalize="off" required>
+      </label>
+
+      <label class="login-field">
+        <span data-i18n="login_password">Password</span>
+        <div class="login-password">
+          <input id="login-pass" name="password" type="password" autocomplete="current-password" required>
+          <button type="button" class="login-eye" id="login-eye" tabindex="-1"
+                  title="Show password" aria-label="Show password">👁</button>
+        </div>
+      </label>
+
+      <p class="login-error" id="login-error" role="alert" hidden></p>
+
+      <label class="login-remember">
+        <input type="checkbox" id="login-remember"> <span data-i18n="login_remember">Remember me on this computer</span>
+      </label>
+
+      <button type="submit" class="btn btn-primary login-btn" id="login-submit">
+        <span data-i18n="login_button">Sign In</span> <span class="login-arrow">→</span>
+      </button>
+
+      <p class="login-hint" id="login-hint"></p>
+    </form>
+
+    <div class="login-foot">
+      <span>v<span id="login-version">2.0.0</span> · SINOPEC International — YADAVARAN</span>
+      <span data-i18n="login_internal">Internal Use Only</span>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════ MAIN APP ═══════════════ -->
+<div class="app">
+  <!-- Topbar -->
+  <header class="topbar">
+    <button class="icon-btn" id="btnToggleSidebar" aria-label="Toggle sidebar" title="Toggle sidebar">☰</button>
+    <div class="logo-wrapper">
+      <img src="/static/logo.png" alt="SINOPEC" style="height:32px;width:auto" onerror="this.style.display='none'">
+      <div>
+        <div class="logo" data-i18n="app_title">FCR Dashboard</div>
+        <div class="sub" data-i18n="company">SINOPEC International — YADAVARAN</div>
+      </div>
+    </div>
+    <div class="spacer"></div>
+
+    <!-- Language dropdown -->
+    <div class="dropdown top-dropdown" id="lang-dropdown">
+      <button class="icon-btn" id="btnLang" aria-label="Language" title="Language">🌐</button>
+      <div class="dropdown-menu lang-menu" role="menu">
+        <button class="lang-option" data-lang="en" role="menuitemradio" aria-checked="true">
+          <span>🇬🇧</span><span>English</span>
+        </button>
+        <button class="lang-option" data-lang="zh" role="menuitemradio" aria-checked="false">
+          <span>🇨🇳</span><span>中文</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- Notification dropdown -->
+    <div class="dropdown top-dropdown" id="notif-dropdown">
+      <button class="icon-btn notification-btn" id="btnNotifications" aria-label="Notifications" title="Notifications">
+        🔔<span id="notifCount">0</span>
+      </button>
+      <div class="dropdown-menu notif-menu" id="notif-menu" role="menu">
+        <div class="notif-header">
+          <strong data-i18n="notifications">Notifications</strong>
+          <span class="notif-subtitle" data-i18n="notif_sub">PEDEC Follow-up Alerts</span>
+        </div>
+        <div class="notif-list" id="notif-list">
+          <span class="text-muted">Loading...</span>
+        </div>
+      </div>
+    </div>
+
+    <div id="dirtyChip" class="dirty-chip">⚠ <span id="dirtyCount">0</span> <span data-i18n="unsaved">unsaved</span></div>
+<button class="icon-btn" id="btnUndo" aria-label="Undo (Ctrl+Z)" title="Undo (Ctrl+Z)">↶</button>
+<button class="icon-btn" id="btnRedo" aria-label="Redo (Ctrl+Y)" title="Redo (Ctrl+Y)">↷</button>
+<button class="icon-btn" id="btnTheme" aria-label="Toggle dark mode" title="Toggle dark mode">🌙</button>
+  </header>
+
+  <!-- Sidebar -->
+  <aside class="sidebar">
+    <div class="nav-item active" data-page="dashboard">
+      <span class="ico">📊</span><span data-i18n="nav_dashboard">Dashboard</span>
+    </div>
+    <div class="nav-item" data-page="records">
+      <span class="ico">📋</span><span data-i18n="nav_records">FCR Records</span>
+    </div>
+    <div class="nav-item" data-page="add">
+      <span class="ico">➕</span><span data-i18n="nav_add">Add New FCR</span>
+    </div>
+    <div class="nav-item" data-page="notifications">
+      <span class="ico">🔔</span><span data-i18n="nav_notifications">Notifications</span>
+    </div>
+    <div class="nav-item" data-page="requests" id="nav-requests" style="display:none">
+      <span class="ico">📝</span><span data-i18n="nav_requests">My Requests</span>
+    </div>
+    <div class="nav-item" data-page="admin-requests" id="nav-admin-requests" style="display:none">
+      <span class="ico">🗂️</span><span data-i18n="nav_admin_requests">Request Queue</span>
+    </div>
+    <div class="nav-item" data-page="reviews" id="nav-reviews" style="display:none">
+      <span class="ico">✍️</span><span data-i18n="nav_reviews">My Reviews</span>
+    </div>
+    <div class="nav-sep"></div>
+    <div class="nav-item" data-page="reports">
+      <span class="ico">📈</span><span data-i18n="nav_reports">Reports</span>
+    </div>
+    <div class="nav-item" data-page="settings">
+      <span class="ico">⚙️</span><span data-i18n="nav_settings">Settings</span>
+    </div>
+    <div class="nav-item" data-page="about">
+      <span class="ico">ℹ️</span><span data-i18n="nav_about">About</span>
+    </div>
+    <div class="nav-sep"></div>
+    <div class="nav-foot"><span id="sidebar-version">v2.0.0</span> · Farzad Meshkipour</div>
+  </aside>
+
+  <!-- Main -->
+  <main class="main">
+
+<!-- ═══ Dashboard ═══ -->
+    <section class="page active" id="page-dashboard">
+      <h1 class="page-title" data-i18n="dashboard">Dashboard</h1>
+      <p class="page-sub" data-i18n="dashboard_sub">Overview of Facility Change Requests</p>
+      <div class="hero-stats mb-3">
+        <div class="hero-card total"><span data-i18n="total_fcrs">Total FCRs</span><strong id="st-total">—</strong></div>
+        <div class="hero-card open"><span data-i18n="open_active">Open / Active</span><strong id="st-open">—</strong></div>
+        <div class="hero-card done"><span data-i18n="finished_closed">Finished / Closed</span><strong id="st-done">—</strong></div>
+        <div class="hero-card pending"><span data-i18n="in_progress">In Progress</span><strong id="st-pend">—</strong></div>
+      </div>
+      <div class="grid grid-2 mb-3">
+        <div class="chart-box"><h4 data-i18n="chart_year">📅 FCRs by Year</h4><div class="chart-container"><canvas id="ch-year"></canvas></div></div>
+        <div class="chart-box"><h4 data-i18n="chart_category">📂 By Category</h4><div class="chart-container"><canvas id="ch-cat"></canvas></div></div>
+      </div>
+      <div class="grid grid-2">
+        <div class="chart-box"><h4 data-i18n="chart_exec">⚙️ Execution Status</h4><div class="chart-container"><canvas id="ch-exec"></canvas></div></div>
+        <div class="chart-box"><h4 data-i18n="chart_action">👥 Top Action Parties</h4><div class="chart-container"><canvas id="ch-ap"></canvas></div></div>
+      </div>
+    </section>
+
+    <!-- ═══ Records ═══ -->
+    <section class="page" id="page-records">
+      <h1 class="page-title" data-i18n="records">FCR Records</h1>
+      <p class="page-sub" data-i18n="records_sub">Click any cell to edit. Changes are saved with Save All.</p>
+
+      <!-- MOVED QUICK STATS FILTER HERE -->
+      <div class="quick-stats mb-3">
+        <div class="quick-stat" data-filter="open">
+          <div class="qs-label" data-i18n="open_active">Open / Active</div>
+          <div class="qs-value" id="qs-open">—</div>
+        </div>
+        <div class="quick-stat" data-filter="finished">
+          <div class="qs-label" data-i18n="finished_closed">Finished / Closed</div>
+          <div class="qs-value" id="qs-finished">—</div>
+        </div>
+        <div class="quick-stat" data-filter="pending">
+          <div class="qs-label" data-i18n="in_progress">In Progress</div>
+          <div class="qs-value" id="qs-pending">—</div>
+        </div>
+        <div class="quick-stat" data-filter="rejected">
+          <div class="qs-label" data-i18n="rejected">Rejected</div>
+          <div class="qs-value" id="qs-rejected">—</div>
+        </div>
+      </div>
+
+      <div class="toolbar">
+        <div class="group">
+          <input type="text" id="f-search" placeholder="🔍 Search..." data-i18n-placeholder="search_placeholder">
+          <button class="btn btn-success" id="btn-export">⬇ <span data-i18n="export">Export</span></button>
+        </div>
+        <div class="spacer"></div>
+        <div class="group">
+          <div class="dropdown">
+            <button class="btn btn-sm" id="btn-columns">👁 <span data-i18n="columns">Columns</span> ▼</button>
+            <div class="dropdown-menu" id="column-menu" role="menu">
+              <div class="dropdown-header">
+                <span data-i18n="show_columns">Show Columns</span>
+                <div>
+                  <button class="btn-link" id="btn-col-preset-minimal" data-i18n="preset_minimal">Minimal</button>
+                  <button class="btn-link" id="btn-col-preset-standard" data-i18n="preset_standard">Standard</button>
+                  <button class="btn-link" id="btn-col-preset-full" data-i18n="preset_full">Full</button>
+                </div>
+              </div>
+              <div class="dropdown-divider"></div>
+              <label><input type="checkbox" data-col="fcr_code" checked> FCR Code</label>
+              <label><input type="checkbox" data-col="fcr_subject" checked> Subject</label>
+              <label><input type="checkbox" data-col="category" checked> Category</label>
+              <label><input type="checkbox" data-col="date" checked> Date</label>
+              <label><input type="checkbox" data-col="originator" checked> Originator</label>
+              <label><input type="checkbox" data-col="action_party" checked> Action Party</label>
+              <label><input type="checkbox" data-col="pedec_status" checked> PEDEC Status</label>
+              <label><input type="checkbox" data-col="fcr_status" checked> FCR Status</label>
+              <label><input type="checkbox" data-col="execution_status" checked> Exec. Status</label>
+              <label><input type="checkbox" data-col="remarks"> Remarks</label>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="filters-bar">
+        <div class="filter-group">
+          <label data-i18n="filter_pedec">PEDEC:</label>
+          <select id="f-pedec"><option value="" data-i18n="all">All</option></select>
+        </div>
+        <div class="filter-group">
+          <label data-i18n="filter_fcr">FCR Status:</label>
+          <select id="f-fcr"><option value="" data-i18n="all">All</option></select>
+        </div>
+        <div class="filter-group">
+          <label data-i18n="filter_exec">Execution:</label>
+          <select id="f-exec"><option value="" data-i18n="all">All</option></select>
+        </div>
+        <div class="filter-group">
+          <label data-i18n="filter_category">Category:</label>
+          <select id="f-cat"><option value="" data-i18n="all">All</option></select>
+        </div>
+        <div class="spacer"></div>
+        <button class="btn btn-sm" id="btn-reset">✖ <span data-i18n="reset">Reset</span></button>
+        <button class="btn btn-sm" id="btn-reset-sort">↕ <span data-i18n="reset_sort">Reset Sort</span></button>
+      </div>
+
+      <div class="toolbar mb-2">
+        <div class="group">
+          <button class="btn btn-success" id="btn-save-all">💾 <span data-i18n="save_all">Save All</span></button>
+          <button class="btn" id="btn-discard">↺ <span data-i18n="discard">Discard</span></button>
+          <button class="btn btn-danger" id="btn-del-sel">🗑 <span data-i18n="delete_selected">Delete Selected</span></button>
+        </div>
+      </div>
+
+      <div class="tbl-wrap">
+        <table class="fcr" id="tbl-fcr">
+          <colgroup>
+            <col style="width:42px">
+            <col data-col="fcr_code" style="width:140px">
+            <col data-col="fcr_subject">
+            <col data-col="category" style="width:100px">
+            <col data-col="date" style="width:105px">
+            <col data-col="originator" style="width:120px">
+            <col data-col="action_party" style="width:130px">
+            <col data-col="pedec_status" style="width:150px">
+            <col data-col="fcr_status" style="width:160px">
+            <col data-col="execution_status" style="width:150px">
+            <col data-col="remarks" style="width:200px">
+            <col style="width:118px">
+          </colgroup>
+<thead><tr>
+              <th scope="col"><input type="checkbox" id="chk-all"></th>
+              <th scope="col" data-col="fcr_code" class="sortable" data-sort="fcr_code">FCR Code</th>
+              <th scope="col" data-col="fcr_subject" class="sortable" data-sort="fcr_subject">Subject</th>
+              <th scope="col" data-col="category" class="sortable" data-sort="category">Category</th>
+              <th scope="col" data-col="date" class="sortable" data-sort="date">Date</th>
+              <th scope="col" data-col="originator" class="sortable" data-sort="originator">Originator</th>
+              <th scope="col" data-col="action_party" class="sortable" data-sort="action_party">Action Party</th>
+              <th scope="col" data-col="pedec_status" class="sortable" data-sort="pedec_status">PEDEC Status</th>
+              <th scope="col" data-col="fcr_status" class="sortable" data-sort="fcr_status">FCR Status</th>
+              <th scope="col" data-col="execution_status" class="sortable" data-sort="execution_status">Exec. Status</th>
+              <th scope="col" data-col="remarks">Remarks</th>
+              <th scope="col" data-i18n="actions">Actions</th>
+          </tr></thead>
+          <tbody id="tbody-fcr"></tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- ═══ Add New ═══ -->
+    <section class="page" id="page-add">
+      <h1 class="page-title" data-i18n="add_new">Add New FCR</h1>
+      <p class="page-sub" data-i18n="add_new_sub">Fill in the details below. FCR Code must be unique.</p>
+      <div class="card">
+        <form id="form-add">
+          <div class="form-grid">
+            <div class="field full"><label>FCR Subject *</label><input name="fcr_subject" required></div>
+            <div class="field"><label>FCR Code</label><input name="fcr_code" placeholder="FCR-CT-PI-046"></div>
+            <div class="field"><label>Category</label><select name="category"><option value="">—</option><option>Permanent</option><option>Temporary</option></select></div>
+            <div class="field"><label>Date</label><input name="date" type="date"></div>
+            <div class="field"><label>Review Date</label><input name="review_date" type="date"></div>
+            <div class="field"><label>Originator</label><input name="originator"></div>
+            <div class="field"><label>Action Party</label><input name="action_party"></div>
+            <div class="field"><label>Level</label><select name="level"><option value="">—</option><option>Level 1</option><option>Level 2</option><option>Level 3</option></select></div>
+            <div class="field"><label>Session Code</label><input name="session_code"></div>
+            <div class="field"><label>PEDEC Status</label><select name="pedec_status" id="sel-pedec-add"></select></div>
+            <div class="field"><label>FCR Status</label><select name="fcr_status" id="sel-fcr-add"></select></div>
+            <div class="field"><label>Execution Status</label><select name="execution_status" id="sel-exec-add"></select></div>
+            <div class="field"><label>Closed Date</label><input name="closed_date" type="date"></div>
+            <div class="field"><label>TR</label><input name="tr"></div>
+            <div class="field"><label>Next Action By</label><input name="next_action_by"></div>
+            <div class="field"><label>Arch Location</label><input name="arch_loc"></div>
+            <div class="field full"><label>Remarks</label><textarea name="remarks"></textarea></div>
+          </div>
+          <div class="form-actions">
+            <button type="reset" class="btn" data-i18n="cancel">Cancel</button>
+            <button type="submit" class="btn btn-primary">✅ <span data-i18n="save_fcr">Save FCR</span></button>
+          </div>
+        </form>
+      </div>
+    </section>
+
+    <!-- ═══ My Requests (Requester module) ═══ -->
+    <section class="page" id="page-requests">
+      <h1 class="page-title" data-i18n="my_requests">My Requests</h1>
+      <p class="page-sub" data-i18n="my_requests_sub">Submit a new FCR request and track its status.</p>
+      <div class="card mb-3">
+        <h3 data-i18n="new_request">New FCR Request</h3>
+        <form id="form-request">
+          <div class="form-grid">
+            <div class="field full"><label data-i18n="req_subject">Subject *</label><input name="subject" required></div>
+            <div class="field full"><label data-i18n="req_justification">Justification *</label><textarea name="justification" required></textarea></div>
+            <div class="field full"><label data-i18n="req_description">Description *</label><textarea name="description" required></textarea></div>
+            <div class="field full"><label data-i18n="req_attachments">Attachments (optional)</label><input name="attachments" type="file" multiple></div>
+          </div>
+          <div class="form-actions">
+            <button type="reset" class="btn" data-i18n="cancel">Cancel</button>
+            <button type="submit" class="btn btn-primary"><span data-i18n="submit_request">Submit Request</span></button>
+          </div>
+        </form>
+      </div>
+      <div class="card">
+        <h3 data-i18n="request_history">Request History</h3>
+        <div class="tbl-wrap"><table class="fcr" id="requests-table">
+          <thead><tr>
+            <th data-i18n="req_number">Request #</th><th data-i18n="req_subject">Subject</th>
+            <th data-i18n="status">Status</th><th data-i18n="submitted_at">Submitted</th>
+            <th data-i18n="fcr_code">FCR Code</th><th></th>
+          </tr></thead><tbody></tbody>
+        </table></div>
+      </div>
+      <div class="card mt-3" id="request-detail" style="display:none"></div>
+    </section>
+
+    <!-- ═══ My Reviews (Reviewer module) ═══ -->
+    <section class="page" id="page-reviews">
+      <h1 class="page-title" data-i18n="my_reviews">My Reviews</h1>
+      <p class="page-sub" data-i18n="my_reviews_sub">Requests assigned to you for review.</p>
+      <div class="card mb-3">
+        <div class="tbl-wrap"><table class="fcr" id="reviews-table">
+          <thead><tr>
+            <th data-i18n="req_number">Request #</th><th data-i18n="req_subject">Subject</th>
+            <th data-i18n="stage">Stage</th><th data-i18n="cycle">Cycle</th>
+            <th data-i18n="status">Status</th><th></th>
+          </tr></thead><tbody></tbody>
+        </table></div>
+      </div>
+      <div class="card" id="review-detail" style="display:none"></div>
+    </section>
+
+    <!-- ═══ Request Queue (FCR Admin module) ═══ -->
+    <section class="page" id="page-admin-requests">
+      <h1 class="page-title" data-i18n="request_queue">Request Queue</h1>
+      <p class="page-sub" data-i18n="request_queue_sub">Incoming FCR requests — review, assign codes, prepare workflow.</p>
+      <div class="card mb-3">
+        <div class="toolbar">
+          <label data-i18n="status">Status</label>
+          <select id="admin-req-status"><option value="">—</option></select>
+        </div>
+        <div class="tbl-wrap"><table class="fcr" id="admin-requests-table">
+          <thead><tr>
+            <th data-i18n="req_number">Request #</th><th data-i18n="req_subject">Subject</th>
+            <th data-i18n="requester">Requester</th><th data-i18n="status">Status</th>
+            <th data-i18n="submitted_at">Submitted</th><th data-i18n="fcr_code">FCR Code</th><th></th>
+          </tr></thead><tbody></tbody>
+        </table></div>
+      </div>
+      <div class="card" id="admin-request-detail" style="display:none"></div>
+    </section>
+
+ <!-- ═══ Notifications ═══ -->
+    <section class="page" id="page-notifications">
+      <h1 class="page-title" data-i18n="notifications">Notifications</h1>
+      <p class="page-sub" data-i18n="notif_page_sub">PEDEC Follow-up Alerts — Issued FCRs waiting longer than the configured threshold.</p>
+
+      <div class="notice-panel mb-3">
+        <div>
+          <h3 data-i18n="pedec_alerts">PEDEC Follow-up Alerts</h3>
+          <p data-i18n="pedec_alerts_desc">Issued FCRs waiting longer than the configured threshold.</p>
+        </div>
+        <div class="notice-list" id="notice-list-full">
+          <span class="text-muted">Loading...</span>
+        </div>
+      </div>
+    </section>      
+    <!-- ═══ Reports ═══ -->
+    <section class="page" id="page-reports">
+      <h1 class="page-title" data-i18n="reports">Reports</h1>
+      <p class="page-sub" data-i18n="reports_sub">Statistical summary of the FCR database</p>
+      <div class="hero-stats mb-3">
+        <div class="hero-card total"><span data-i18n="total">Total</span><strong id="rp-total">—</strong></div>
+        <div class="hero-card open"><span data-i18n="open">Open</span><strong id="rp-open">—</strong></div>
+        <div class="hero-card done"><span data-i18n="closed">Closed</span><strong id="rp-done">—</strong></div>
+        <div class="hero-card pending"><span data-i18n="rejected">Rejected</span><strong id="rp-rej">—</strong></div>
+      </div>
+      <div class="grid grid-2 mb-3">
+        <div class="chart-box"><h4 data-i18n="status_distribution">Status Distribution</h4><div class="chart-container"><canvas id="rp-pie"></canvas></div></div>
+        <div class="chart-box"><h4 data-i18n="trend_year">Trend by Year</h4><div class="chart-container"><canvas id="rp-trend"></canvas></div></div>
+      </div>
+      <div class="mt-3">
+        <button class="btn btn-primary" id="btn-export-2">⬇ <span data-i18n="export_report">Export Full Report to Excel</span></button>
+      </div>
+    </section>
+
+    <!-- ═══ Settings ═══ -->
+    <section class="page" id="page-settings">
+      <h1 class="page-title" data-i18n="settings">Settings</h1>
+      <p class="page-sub" data-i18n="settings_sub">Application configuration</p>
+      <div class="card">
+        <div class="settings-section">
+          <h4 data-i18n="set_company">🏢 Company</h4>
+          <div class="kv-row"><div class="k" data-i18n="company_name">Company Name</div><div class="v"><input id="set-company"></div></div>
+        </div>
+        <div class="settings-section">
+          <h4 data-i18n="set_database">🗄 Database</h4>
+          <div class="kv-row"><div class="k" data-i18n="db_location">Database Location</div><div class="v"><input id="set-db" readonly></div></div>
+          <p class="text-muted" style="font-size:11px;margin:4px 0 0">ℹ️ Database is always stored next to the executable (portable).</p>
+        </div>
+        <div class="settings-section">
+          <h4>🤖 Automation &amp; Backups</h4>
+          <div class="kv-row">
+            <div class="k">PEDEC pending alert threshold (days)</div>
+            <div class="v"><input type="number" id="set-pedec-alert-days" min="1"></div>
+          </div>
+          <div class="kv-row">
+            <div class="k">Automatic database backup</div>
+            <div class="v"><label><input type="checkbox" id="set-auto-backup-enabled"> Enable scheduled backup</label></div>
+          </div>
+          <div class="kv-row">
+            <div class="k">Automatic backup interval (days)</div>
+            <div class="v"><input type="number" id="set-auto-backup-interval" min="1"></div>
+          </div>
+          <div class="kv-row">
+            <div class="k">Automatic Excel export</div>
+            <div class="v"><label><input type="checkbox" id="set-auto-export-enabled"> Enable scheduled export</label></div>
+          </div>
+          <div class="kv-row">
+            <div class="k">Automatic export interval (days)</div>
+            <div class="v"><input type="number" id="set-auto-export-interval" min="1"></div>
+          </div>
+          <div class="kv-row">
+            <div class="k">Automatic export folder (path)</div>
+            <div class="v"><input id="set-auto-export-location" placeholder="exports"></div>
+          </div>
+        </div>
+
+        <div class="settings-section">
+          <h4 data-i18n="set_folder">📁 Folder Settings</h4>
+          <div class="kv-row"><div class="k" data-i18n="parent_path">Parent Folder Path</div><div class="v"><input id="set-root" placeholder="X:\1-DC"></div></div>
+          <p class="text-muted" style="font-size:11px;margin:8px 0 0">
+            ℹ️ Folder structure: <code>{parent}\{Area}\{Dept}\{FCR_Code}</code><br>
+            Example: <code>X:\1-DC\CTEP\PI\FCR-CT-PI-046</code><br>
+            Areas: CTEP, EPL, FILMS, WELLS, Miscellaneous<br>
+            Departments: PI, ME, IN, EL, HV, CR, PR, CV
+          </p>
+        </div>
+        <div class="settings-section">
+          <h4 data-i18n="set_backup">💾 Backup</h4>
+          <div class="kv-row"><div class="k" data-i18n="backup_folder">Backup Folder</div><div class="v"><input id="set-backup" placeholder="backups"></div></div>
+          <div class="kv-row"><div class="k" data-i18n="resolved_location">Resolved Location</div><div class="v"><input id="set-backup-resolved" readonly></div></div>
+          <div class="mt-3 flex gap-2">
+            <button class="btn btn-primary" id="btn-backup">💾 <span data-i18n="backup_now">Backup Database Now</span></button>
+            <button class="btn" id="btn-show-backups">📜 <span data-i18n="view_backups">View Backups</span></button>
+          </div>
+          <div id="backup-list" class="mt-3"></div>
+        </div>
+        
+        <div class="settings-section">
+          <h4 data-i18n="set_appearance">🎨 Appearance</h4>
+          <div class="kv-row"><div class="k" data-i18n="dark_mode">Dark Mode</div><div class="v"><label><input type="checkbox" id="set-dark"> <span data-i18n="enable_dark">Enable dark theme</span></label></div></div>
+        </div>
+        <div class="form-actions">
+          <button class="btn btn-danger" id="btn-reset-settings" style="margin-right:auto">🔄 <span data-i18n="reset_defaults">Reset to Defaults</span></button>
+          <button class="btn btn-primary" id="btn-save-settings">✅ <span data-i18n="save_settings">Save Settings</span></button>
+        </div>
+      </div>
+    </section>
+
+    <!-- ═══ About ═══ -->
+    <section class="page" id="page-about">
+      <div class="about-hero">
+        <h2>FCR Database Dashboard</h2>
+        <p>Facility Change Management Database</p>
+      </div>
+      <div class="about-grid">
+        <div class="about-card">
+          <h4>Application Info</h4>
+          <div class="row"><span>Version</span><span id="ab-version">—</span></div>
+          <div class="row"><span>Author</span><span id="ab-author">—</span></div>
+          <div class="row"><span>Company</span><span id="ab-company">—</span></div>
+          <div class="row"><span>Project</span><span>YADAVARAN</span></div>
+          <div class="row"><span>Data Folder</span><span id="ab-data-dir">—</span></div>
+        </div>
+        <div class="about-card">
+          <h4>Database</h4>
+          <div class="row"><span>Location</span><span id="ab-db">—</span></div>
+          <div class="row"><span>Total Records</span><span id="ab-total">—</span></div>
+          <div class="row"><span>Status</span><span id="ab-status">—</span></div>
+          <div class="row"><span>Schema</span><span id="ab-schema">—</span></div>
+        </div>
+        <div class="about-card">
+          <h4>Technology Stack</h4>
+          <div class="row"><span>Backend</span><span>🐍 Python <span id="ab-python">—</span> + FastAPI</span></div>
+          <div class="row"><span>Database</span><span>🗄 SQLite (WAL)</span></div>
+          <div class="row"><span>Desktop</span><span>🪟 Microsoft Edge (App Mode)</span></div>
+          <div class="row"><span>Frontend</span><span>HTML5 / CSS3 / JS</span></div>
+        </div>
+        <div class="about-card">
+          <h4>Contact</h4>
+          <div class="row"><span>Role</span><span>Asset Engineer</span></div>
+          <div class="row"><span>Email</span><span>f.meshkipour@petroyada.com</span></div>
+          <div class="row"><span>Number</span><span>(021)2497-1261</span></div>
+          <div class="row"><span>License</span><span>Internal Use</span></div>
+        </div>
+      </div>
+    </section>
+
+  </main>
+</div>
+
+<!-- ═══ Confirm Modal ═══ -->
+<div class="modal-backdrop" id="modal">
+  <div class="modal">
+    <h3 id="modal-title">Confirm</h3>
+    <p id="modal-msg">Are you sure?</p>
+    <div class="actions">
+      <button class="btn" id="modal-cancel" data-i18n="cancel">Cancel</button>
+      <button class="btn btn-danger" id="modal-ok" data-i18n="delete">Delete</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ Edit Modal ═══ -->
+<div class="modal-backdrop" id="edit-modal">
+  <div class="modal" style="min-width:700px;max-width:800px;max-height:90vh;overflow-y:auto">
+    <h3 id="edit-modal-title">Edit FCR</h3>
+    <form id="form-edit">
+      <input type="hidden" id="edit-id">
+      <div class="form-grid" style="grid-template-columns:repeat(2,1fr);gap:12px">
+        <div class="field full"><label>FCR Subject *</label><input id="edit-fcr_subject" required></div>
+        <div class="field"><label>FCR Code</label><input id="edit-fcr_code" placeholder="FCR-CT-PI-046"></div>
+        <div class="field"><label>Category</label><select id="edit-category"><option value="">—</option><option>Permanent</option><option>Temporary</option></select></div>
+        <div class="field"><label>Date</label><input id="edit-date" type="date"></div>
+        <div class="field"><label>Review Date</label><input id="edit-review_date" type="date"></div>
+        <div class="field"><label>Originator</label><input id="edit-originator"></div>
+        <div class="field"><label>Action Party</label><input id="edit-action_party"></div>
+        <div class="field"><label>Level</label><select id="edit-level"><option value="">—</option><option>Level 1</option><option>Level 2</option><option>Level 3</option></select></div>
+        <div class="field"><label>Session Code</label><input id="edit-session_code"></div>
+        <div class="field"><label>PEDEC Status</label><select id="edit-pedec_status"></select></div>
+        <div class="field"><label>FCR Status</label><select id="edit-fcr_status"></select></div>
+        <div class="field"><label>Execution Status</label><select id="edit-execution_status"></select></div>
+        <div class="field"><label>Closed Date</label><input id="edit-closed_date" type="date"></div>
+        <div class="field"><label>TR</label><input id="edit-tr"></div>
+        <div class="field"><label>Next Action By</label><input id="edit-next_action_by"></div>
+        <div class="field"><label>Arch Location</label><input id="edit-arch_loc"></div>
+        <div class="field full"><label>Remarks</label><textarea id="edit-remarks" rows="3"></textarea></div>
+      </div>
+      <div class="form-actions">
+        <button type="button" class="btn" id="btn-edit-cancel" data-i18n="cancel">Cancel</button>
+        <button type="submit" class="btn btn-primary">💾 <span data-i18n="save_changes">Save Changes</span></button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<div id="toast-container"></div>
+<script src="/static/script.js?v=2.0.0"></script>
+</body>
+</html>

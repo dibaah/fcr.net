@@ -1,0 +1,20 @@
+[Unit]
+Description=FCR Dashboard (.NET) — centralized web service
+After=network.target
+
+[Service]
+Type=notify
+WorkingDirectory=/opt/fcr-web
+ExecStart=/opt/fcr-web/FCR.Web
+Restart=on-failure
+RestartSec=5
+Environment=ASPNETCORE_ENVIRONMENT=Production
+# Config overrides can go in /etc/fcr-web/appsettings.Local.json (see deployment.md)
+# or as environment variables, e.g.:
+# Environment=Fcr__DataDir=/var/lib/fcr/data
+# Environment=Fcr__HttpsCertPath=/etc/fcr-web/fcr-web.pfx
+# Environment=Fcr__HttpsCertPassword=<secret>
+SyslogIdentifier=fcr-web
+
+[Install]
+WantedBy=multi-user.target

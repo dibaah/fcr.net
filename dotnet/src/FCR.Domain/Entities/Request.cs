@@ -1,0 +1,144 @@
+namespace FCR.Domain.Entities;
+
+/// <summary>
+/// Initial FCR request submitted by a Requester (master plan §4.2 FCRRequests).
+/// Kept logically separate from the `fcr` technical record — the Request ID
+/// exists independently; FCR Code is assigned later by the FCR Admin.
+/// </summary>
+public class FcrRequest
+{
+    public string Id { get; set; } = Guid.NewGuid().ToString();
+    public string RequestNumber { get; set; } = "";
+    public long RequesterUserId { get; set; }
+    public string Subject { get; set; } = "";
+    public string Justification { get; set; } = "";
+    public string Description { get; set; } = "";
+    public string SubmissionStatus { get; set; } = RequestStatuses.Submitted;
+    public string? SubmittedAt { get; set; }
+    public string CreatedAt { get; set; } = "";
+    public string UpdatedAt { get; set; } = "";
+    public long? LinkedFcrId { get; set; }
+    public string FcrCode { get; set; } = "";
+    public string Category { get; set; } = "";
+    public User? Requester { get; set; }
+    public List<FcrRequestComment> Comments { get; set; } = [];
+    public List<FcrAttachment> Attachments { get; set; } = [];
+}
+
+/// <summary>Comments stored independently from formal decisions (§4.2 FCRComments).</summary>
+public class FcrRequestComment
+{
+    public long Id { get; set; }
+    public string FcrRequestId { get; set; } = "";
+    public long UserId { get; set; }
+    public string CommentText { get; set; } = "";
+    public string CommentType { get; set; } = "";
+    public string CreatedAt { get; set; } = "";
+    public User? User { get; set; }
+}
+
+/// <summary>Attachment metadata (§4.2 FCRAttachments); the file lives on disk.</summary>
+public class FcrAttachment
+{
+    public long Id { get; set; }
+    public string FcrRequestId { get; set; } = "";
+    public long UploadedByUserId { get; set; }
+    public string OriginalFileName { get; set; } = "";
+    public string StoredFileName { get; set; } = "";
+    public string StorageLocation { get; set; } = "";
+    public string ContentType { get; set; } = "";
+    public long FileSize { get; set; }
+    public string UploadedAt { get; set; } = "";
+    public User? UploadedBy { get; set; }
+}
+
+/// <summary>Workflow instance associated with an FCR request (§4.2).</summary>
+public class FcrWorkflowInstance
+{
+    public long Id { get; set; }
+    public string FcrRequestId { get; set; } = "";
+    public string WorkflowStatus { get; set; } = WorkflowStatuses.NotStarted;
+    public string ReviewMode { get; set; } = "";
+    public int CurrentStage { get; set; }
+    /// <summary>Review cycle — increments each time the admin resubmits (§2.6).</summary>
+    public int Cycle { get; set; } = 1;
+    public string? StartedAt { get; set; }
+    public string? CompletedAt { get; set; }
+    public string CreatedAt { get; set; } = "";
+    public string UpdatedAt { get; set; } = "";
+    public List<FcrWorkflowStage> Stages { get; set; } = [];
+}
+
+/// <summary>Configured workflow stage and its order (§4.2).</summary>
+public class FcrWorkflowStage
+{
+    public long Id { get; set; }
+    public long WorkflowInstanceId { get; set; }
+    public string StageName { get; set; } = "";
+    public int StageOrder { get; set; }
+    public string DecisionRule { get; set; } = "";
+    public string StageStatus { get; set; } = "Pending";
+    public List<FcrReviewAssignment> Assignments { get; set; } = [];
+}
+
+/// <summary>Reviewer assignment on a workflow stage (§4.2 FCRReviewAssignments).</summary>
+public class FcrReviewAssignment
+{
+    public long Id { get; set; }
+    public long WorkflowStageId { get; set; }
+    public long AssignedUserId { get; set; }
+    public int AssignmentOrder { get; set; }
+    /// <summary>Review cycle this assignment belongs to (instance.Cycle).</summary>
+    public int Cycle { get; set; } = 1;
+    /// <summary>Pending | Active | Completed | Skipped | Superseded.</summary>
+    public string AssignmentStatus { get; set; } = "Pending";
+    public string AssignedAt { get; set; } = "";
+    public string? CompletedAt { get; set; }
+    public User? AssignedUser { get; set; }
+}
+
+/// <summary>Individual review action — decisions are never overwritten (§2.5/§4.2 FCRReviews).</summary>
+public class FcrReview
+{
+    public long Id { get; set; }
+    public string FcrRequestId { get; set; } = "";
+    public long WorkflowInstanceId { get; set; }
+    public long? ReviewAssignmentId { get; set; }
+    public long ReviewerUserId { get; set; }
+    public string ReviewerName { get; set; } = "";
+    public string StageName { get; set; } = "";
+    public int ReviewCycle { get; set; }
+    /// <summary>approve | comment | reject | return</summary>
+    public string ActionType { get; set; } = "";
+    public string? Comment { get; set; }
+    public string PreviousStatus { get; set; } = "";
+    public string ResultingStatus { get; set; } = "";
+    public string CreatedAt { get; set; } = "";
+    public User? Reviewer { get; set; }
+}
+
+/// <summary>In-app notification generated by workflow events (§9).</summary>
+public class FcrNotification
+{
+    public long Id { get; set; }
+    public long UserId { get; set; }
+    /// <summary>request_submitted | assignment | decision | returned | rejected | approved | comment</summary>
+    public string NotificationType { get; set; } = "";
+    public string Message { get; set; } = "";
+    public string? FcrRequestId { get; set; }
+    public bool IsRead { get; set; }
+    public string CreatedAt { get; set; } = "";
+    public User? User { get; set; }
+}
+
+/// <summary>Configurable workflow template maintained separately from FCR records (§2.4C/§4.2).</summary>
+public class WorkflowDefinition
+{
+    public long Id { get; set; }
+    public string WorkflowName { get; set; } = "";
+    public string ReviewMode { get; set; } = "";
+    /// <summary>JSON config: decision_rule, required_approvals, stages.</summary>
+    public string Configuration { get; set; } = "{}";
+    public bool IsActive { get; set; } = true;
+    public string CreatedAt { get; set; } = "";
+}
