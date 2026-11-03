@@ -4,8 +4,6 @@ using Microsoft.EntityFrameworkCore.Migrations;
 
 namespace FCR.Infrastructure.Migrations;
 
-[DbContext(typeof(FcrDbContext))]
-[Migration("20261103193000_AddExternalIdentityMapping")]
 public sealed partial class AddExternalIdentityMapping : Migration
 {
     protected override void Up(MigrationBuilder migrationBuilder)
