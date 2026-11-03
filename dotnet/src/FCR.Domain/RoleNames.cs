@@ -1,7 +1,7 @@
 namespace FCR.Domain;
 
 /// <summary>
-/// The five roles defined by the master plan (§2.1). Names are the API-visible
+/// The FCR module and workflow roles. Names are the API-visible
 /// values and are also used as claim values in the auth cookie.
 /// </summary>
 public static class RoleNames
