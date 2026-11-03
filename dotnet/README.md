@@ -35,11 +35,46 @@ an open IT decision in the master plan; swap `AddAuthentication` in `Program.cs`
 - `POST /api/auth/logout`, `GET /api/auth/me`
 - `GET /api/admin/roles`, `GET/POST/PUT /api/admin/users` — **System Administrator** role only
 - All other `/api/*` routes require an authenticated user; only `/api/health` stays anonymous
-- Roles seeded from the master plan: Requester, FCR Admin, Reviewer, Approver, System Administrator (multi-role supported)
+- Roles: FCR User, Requester, FCR Admin, Reviewer, Approver, System Administrator (multi-role supported). ERMS external users are mapped by a stable subject claim to an FCR internal user record; FCR roles are loaded from the FCR database per request.
 - First-run admin: `admin` / `Fcr:SeedAdminPassword` (default `admin`) — created only when `users` is empty
 - `OnValidatePrincipal` re-checks `is_active` and refreshes role claims per request — deactivation and
   role changes apply immediately to existing sessions
 - PBKDF2-SHA256 password hashes (`pbkdf2$iters$salt$hash`); never store plaintext
+
+## ERMS module integration (Phase 1–2)
+
+The `FCR.Module` project is the in-process integration target for the ERMS ASP.NET Core 8 application. ERMS owns authentication and its main UI shell; FCR does not add a login scheme when registered as a module.
+
+```csharp
+builder.Services.AddFcrModule(builder.Configuration);
+
+app.UseAuthentication();
+app.UseFcrModule();       // identity mapping + audit middleware
+app.UseAuthorization();
+app.MapFcrModule();
+```
+
+Configure the stable ERMS subject claim (default `ClaimTypes.NameIdentifier`):
+
+```json
+{
+  "Fcr": {
+    "Identity": {
+      "ExternalIdClaim": "sub"
+    }
+  }
+}
+```
+
+The claim value is matched against `users.external_id`. FCR Admin/System Administrator maps users and assigns FCR roles through:
+
+- `GET /api/admin/fcr-users`
+- `POST /api/admin/fcr-users` — create external identity mapping + roles
+- `PUT /api/admin/fcr-users/{id}` — update active state/profile/roles
+
+The module refreshes FCR role claims from the FCR DB on each request and does not trust incoming ERMS role claims as FCR roles. Unmapped or inactive users are denied FCR access. ERMS must separately enforce its FCR module access gate.
+
+`InitializeFcrModuleAsync()` runs EF migrations and seeds FCR role definitions only; it does not create the standalone development admin. Back up and rehearse migrations on a database copy before production.
 
 ## Build & test
 
