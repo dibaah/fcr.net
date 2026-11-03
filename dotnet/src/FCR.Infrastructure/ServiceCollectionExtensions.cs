@@ -26,6 +26,8 @@ public static class ServiceCollectionExtensions
             o.BackupLocation = config["Fcr:BackupLocation"] ?? "backups";
             o.AttachmentRoot = config["Fcr:AttachmentRoot"] ?? o.AttachmentRoot;
             o.RequestAttachmentDir = config["Fcr:RequestAttachmentDir"] ?? o.RequestAttachmentDir;
+            o.IdentityExternalIdClaim = config["Fcr:Identity:ExternalIdClaim"]
+                ?? o.IdentityExternalIdClaim;
         });
         services.AddDbContext<FcrDbContext>((sp, b) =>
         {
