@@ -146,11 +146,43 @@ public class RequestFlowTests(ApiParityTests.Fixture fixture)
 
         // 4. Admin save (draft): first admin action flips status
         var save = await admin.PutAsJsonAsync($"/api/admin/requests/{id}",
-            new { fcr_code = "FCR-CT-PI-099", category = "Permanent" });
+            new { fcr_code = "FCR-CT-PI-099", category = "Permanent",
+                  contractor = "Contractor A", subcontractor = "Subcontractor B" });
         Assert.Equal(HttpStatusCode.OK, save.StatusCode);
         var dto = await Body(save);
         Assert.Equal("Under Admin Review", dto.GetProperty("submission_status").GetString());
         Assert.Equal("FCR-CT-PI-099", dto.GetProperty("fcr_code").GetString());
+        Assert.Equal("Contractor A", dto.GetProperty("contractor").GetString());
+        Assert.Equal("Subcontractor B", dto.GetProperty("subcontractor").GetString());
+        Assert.True(dto.GetProperty("is_archived").GetBoolean());
+        Assert.False(string.IsNullOrWhiteSpace(dto.GetProperty("archived_at").GetString()));
+
+        // FCR code assignment creates the numbered archive, form manifest, and attachment copy.
+        var archiveDir = Path.Combine(fixture.DataDir, "CTEP", "PI", "FCR-CT-PI-099");
+        Assert.True(Directory.Exists(archiveDir));
+        var manifestPath = Path.Combine(archiveDir, "FCR-CT-PI-099-request.json");
+        Assert.True(File.Exists(manifestPath));
+        var htmlPath = Path.Combine(archiveDir, "FCR-CT-PI-099-request.html");
+        Assert.True(File.Exists(htmlPath));
+        var html = await File.ReadAllTextAsync(htmlPath);
+        Assert.Contains("Full flow request", html);
+        Assert.Contains("Contractor A", html);
+        var manifest = JsonDocument.Parse(await File.ReadAllTextAsync(manifestPath)).RootElement;
+        Assert.Equal("Full flow request", manifest.GetProperty("title").GetString());
+        Assert.Equal("Contractor A", manifest.GetProperty("contractor").GetString());
+        Assert.Equal("Subcontractor B", manifest.GetProperty("subcontractor").GetString());
+        var archivedAttachment = Directory.GetFiles(archiveDir, "ATT-*").Single();
+        Assert.Equal("file body", await File.ReadAllTextAsync(archivedAttachment));
+        // Archived attachments are immutable; explicit archive endpoint is idempotent/retryable.
+        var lateAttachment = new MultipartFormDataContent();
+        lateAttachment.Add(new ByteArrayContent(new byte[] { 4 }), "file", "late.txt");
+        Assert.Equal(HttpStatusCode.BadRequest,
+            (await requester.PostAsync($"/api/requests/{id}/attachments", lateAttachment)).StatusCode);
+        Assert.Equal(HttpStatusCode.BadRequest,
+            (await requester.DeleteAsync($"/api/requests/{id}/attachments/{attId}")).StatusCode);
+        var archiveRetry = await admin.PostAsync($"/api/admin/requests/{id}/archive", null);
+        Assert.Equal(HttpStatusCode.OK, archiveRetry.StatusCode);
+        Assert.Equal("FCR-CT-PI-099", (await Body(archiveRetry)).GetProperty("fcr_code").GetString());
 
         // 5. Workflow prep needs >=1 reviewer with the Reviewer role
         Assert.Equal(HttpStatusCode.BadRequest,

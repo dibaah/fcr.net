@@ -76,6 +76,14 @@ The module refreshes FCR role claims from the FCR DB on each request and does no
 
 `InitializeFcrModuleAsync()` runs EF migrations and seeds FCR role definitions only; it does not create the standalone development admin. Back up and rehearse migrations on a database copy before production.
 
+## FCR request archive (Phase 5)
+
+Configure the server-side archive root in the ERMS host using `Fcr:AttachmentRoot` (for example a UNC path such as `\\\\fileserver\\FCRArchive`). If this override is omitted, the standalone host falls back to its settings.json attachment root.
+
+When FCR Admin assigns a valid official FCR code, the module creates/resolves the code folder using the legacy area/department convention, copies request attachments into it using stable attachment-ID-prefixed names, and atomically writes `<FCR-code>-request.json` containing the submission and admin metadata (title, justification, description, category, contractor, subcontractor, requester, dates, attachment inventory). Original upload files remain in the request store. Assigning the official code (with category) creates the archive and writes the manifest plus a printable HTML form. The operation is idempotent and can be retried through the admin endpoint `POST /api/admin/requests/{id}/archive`. Once archived, FCR number/category/contractor metadata and attachments are locked to preserve the archive; upload all request attachments before official number assignment.
+
+The linked legacy FCR record's `arch_loc` is updated to the resolved folder path. The ERMS service identity must have create/read/write access to the configured share. Archive I/O failure is surfaced to the admin so it can be retried; database assignment is retained, and archive writes are idempotent. Validate this behavior on a non-production share before cutover.
+
 ## Build & test
 
 ```bash

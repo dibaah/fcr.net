@@ -119,6 +119,17 @@ public static class RequestEndpoints
             catch (FcrValidationException ex) { return Detail(400, ex.Message); }
         });
 
+        admin.MapPost("/{id}/archive", async Task<IResult> (
+            string id, IRequestService svc) =>
+        {
+            try
+            {
+                var archive = await svc.ArchiveAsync(id);
+                return archive is null ? Detail(404, "Request not found") : Results.Ok(archive);
+            }
+            catch (FcrValidationException ex) { return Detail(400, ex.Message); }
+        });
+
         admin.MapPost("/{id}/create-fcr", async Task<IResult> (
             string id, IRequestService svc) =>
         {

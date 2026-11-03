@@ -304,6 +304,14 @@ namespace FCR.Infrastructure.Migrations
                         .HasColumnType("TEXT")
                         .HasColumnName("subcontractor");
 
+                    b.Property<string>("ArchivePath")
+                        .HasColumnType("TEXT")
+                        .HasColumnName("archive_path");
+
+                    b.Property<string>("ArchivedAt")
+                        .HasColumnType("TEXT")
+                        .HasColumnName("archived_at");
+
                     b.Property<string>("CreatedAt")
                         .IsRequired()
                         .HasColumnType("TEXT")
