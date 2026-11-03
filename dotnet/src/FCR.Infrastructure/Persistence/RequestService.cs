@@ -214,6 +214,15 @@ public sealed class RequestService(FcrDbContext db, AttachmentStore store, IFcrR
         var req = await db.FcrRequests.FindAsync([id], ct);
         if (req is null) return null;
 
+        if (!string.IsNullOrWhiteSpace(req.ArchivePath)
+            && ((input.FcrCode is not null && !string.Equals(
+                    req.FcrCode, FcrCode.Validate(input.FcrCode), StringComparison.OrdinalIgnoreCase))
+                || (input.Category is not null && input.Category.Trim() != req.Category)
+                || (input.Contractor is not null && input.Contractor.Trim() != req.Contractor)
+                || (input.Subcontractor is not null && input.Subcontractor.Trim() != req.Subcontractor)))
+            throw new FcrValidationException(
+                "FCR number/category/contractor fields cannot be changed after archiving");
+
         if (input.FcrCode is not null)
         {
             var code = FcrCode.Validate(input.FcrCode);
