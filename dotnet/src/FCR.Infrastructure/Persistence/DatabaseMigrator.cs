@@ -59,7 +59,7 @@ public sealed class DatabaseMigrator(FcrDbContext db)
         await conn.ExecuteAsync(
             "INSERT OR IGNORE INTO __EFMigrationsHistory (MigrationId, ProductVersion) " +
             "VALUES ($id, $ver)", ct,
-            ("$id", db.Database.GetMigrations().First()), ("$ver", "10.0.0"));
+            ("$id", db.Database.GetMigrations().First()), ("$ver", "8.0.0"));
     }
 
     private async Task StampSchemaVersionAsync(SqliteConnection conn, CancellationToken ct)

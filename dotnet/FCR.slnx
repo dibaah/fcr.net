@@ -3,6 +3,7 @@
     <Project Path="src/FCR.Application/FCR.Application.csproj" />
     <Project Path="src/FCR.Domain/FCR.Domain.csproj" />
     <Project Path="src/FCR.Infrastructure/FCR.Infrastructure.csproj" />
+    <Project Path="src/FCR.Module/FCR.Module.csproj" />
     <Project Path="src/FCR.Web/FCR.Web.csproj" />
   </Folder>
   <Folder Name="/tests/">
