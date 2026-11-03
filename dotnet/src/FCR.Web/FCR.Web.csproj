@@ -2,7 +2,12 @@
 
   <ItemGroup>
     <ProjectReference Include="..\FCR.Application\FCR.Application.csproj" />
+    <ProjectReference Include="..\FCR.Module\FCR.Module.csproj" />
     <ProjectReference Include="..\FCR.Infrastructure\FCR.Infrastructure.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Compile Remove="ApiEndpoints.cs;RequestEndpoints.cs;Phase7AuditMiddleware.cs;Phase7ReportEndpoints.cs;DbHealthCheck.cs" />
   </ItemGroup>
 
   <PropertyGroup>
