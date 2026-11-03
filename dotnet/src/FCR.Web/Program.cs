@@ -111,6 +111,7 @@ if (staticDir is not null)
     var provider = new PhysicalFileProvider(staticDir);
     app.UseStaticFiles(new StaticFileOptions { FileProvider = provider, RequestPath = "/static" });
     app.MapGet("/", () => Results.File(Path.Combine(staticDir, "index.html"), "text/html"));
+    app.MapGet("/phase7-reports.html", () => Results.File(Path.Combine(staticDir, "phase7-reports.html"), "text/html"));
 }
 
 app.Use(async (context, next) =>
