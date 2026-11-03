@@ -289,10 +289,28 @@ namespace FCR.Infrastructure.Migrations
                         .HasColumnType("TEXT")
                         .HasColumnName("id");
 
+                    b.Property<string>("ArchivePath")
+                        .HasColumnType("TEXT")
+                        .HasColumnName("archive_path");
+
+                    b.Property<string>("ArchivedAt")
+                        .HasColumnType("TEXT")
+                        .HasColumnName("archived_at");
+
                     b.Property<string>("Category")
                         .IsRequired()
                         .HasColumnType("TEXT")
                         .HasColumnName("category");
+
+                    b.Property<string>("Contractor")
+                        .IsRequired()
+                        .HasColumnType("TEXT")
+                        .HasColumnName("contractor");
+
+                    b.Property<string>("Subcontractor")
+                        .IsRequired()
+                        .HasColumnType("TEXT")
+                        .HasColumnName("subcontractor");
 
                     b.Property<string>("CreatedAt")
                         .IsRequired()
