@@ -6,7 +6,7 @@ namespace FCR.Infrastructure.Migrations;
 
 [DbContext(typeof(FcrDbContext))]
 [Migration("20261103193000_AddExternalIdentityMapping")]
-public sealed class AddExternalIdentityMapping : Migration
+public sealed partial class AddExternalIdentityMapping : Migration
 {
     protected override void Up(MigrationBuilder migrationBuilder)
     {
