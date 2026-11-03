@@ -111,6 +111,7 @@ if (staticDir is not null)
     var provider = new PhysicalFileProvider(staticDir);
     app.UseStaticFiles(new StaticFileOptions { FileProvider = provider, RequestPath = "/static" });
     app.MapGet("/", () => Results.File(Path.Combine(staticDir, "index.html"), "text/html"));
+    app.MapGet("/phase7-reports.html", () => Results.File(Path.Combine(staticDir, "phase7-reports.html"), "text/html"));
 }
 
 app.Use(async (context, next) =>
@@ -131,6 +132,7 @@ if (app.Configuration.GetValue("Fcr:BehindProxy", false))
     });
 
 app.UseHttpLogging();
+app.UseMiddleware<Phase7AuditMiddleware>();
 app.UseAuthentication();
 app.UseAuthorization();
 
@@ -140,6 +142,7 @@ app.MapHealthChecks("/health/ready");
 app.MapApi();
 app.MapAuthApi();
 app.MapRequestApi();
+app.MapPhase7Reports();
 
 await app.RunAsync();
 

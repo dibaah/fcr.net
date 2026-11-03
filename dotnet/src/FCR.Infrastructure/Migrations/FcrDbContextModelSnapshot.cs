@@ -16,6 +16,62 @@ namespace FCR.Infrastructure.Migrations
 #pragma warning disable 612, 618
             modelBuilder.HasAnnotation("ProductVersion", "10.0.14");
 
+            modelBuilder.Entity("FCR.Domain.Entities.FcrAuditLog", b =>
+                {
+                    b.Property<long>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("INTEGER")
+                        .HasColumnName("id");
+
+                    b.Property<string>("Action")
+                        .IsRequired()
+                        .HasColumnType("TEXT")
+                        .HasColumnName("action");
+
+                    b.Property<DateTime>("CreatedAtUtc")
+                        .HasColumnType("TEXT")
+                        .HasColumnName("created_at_utc");
+
+                    b.Property<string>("HttpMethod")
+                        .IsRequired()
+                        .HasColumnType("TEXT")
+                        .HasColumnName("http_method");
+
+                    b.Property<string>("Path")
+                        .IsRequired()
+                        .HasColumnType("TEXT")
+                        .HasColumnName("path");
+
+                    b.Property<string>("RequestId")
+                        .HasColumnType("TEXT")
+                        .HasColumnName("request_id");
+
+                    b.Property<int>("StatusCode")
+                        .HasColumnType("INTEGER")
+                        .HasColumnName("status_code");
+
+                    b.Property<long?>("UserId")
+                        .HasColumnType("INTEGER")
+                        .HasColumnName("user_id");
+
+                    b.Property<string>("Username")
+                        .HasColumnType("TEXT")
+                        .HasColumnName("username");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("CreatedAtUtc")
+                        .HasDatabaseName("idx_audit_created_at");
+
+                    b.HasIndex("RequestId")
+                        .HasDatabaseName("idx_audit_request");
+
+                    b.HasIndex("UserId", "CreatedAtUtc")
+                        .HasDatabaseName("idx_audit_user_created_at");
+
+                    b.ToTable("fcr_audit_logs", (string)null);
+                });
+
             modelBuilder.Entity("FCR.Domain.Entities.Fcr", b =>
                 {
                     b.Property<long>("Id")
