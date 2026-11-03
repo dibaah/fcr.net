@@ -1,5 +1,17 @@
 # Phase 7 Security Review and Business UAT
 
+## ERMS module identity and role checks (Phase 2)
+
+- [ ] ERMS host uses the correct stable subject claim (`Fcr:Identity:ExternalIdClaim`).
+- [ ] An ERMS user mapped to `FCR User` can access permitted FCR module routes.
+- [ ] An ERMS user mapped to `FCR Admin` can manage FCR identity mappings and roles.
+- [ ] An authenticated ERMS user with no FCR mapping/role receives 403 on protected FCR routes.
+- [ ] Unmapped and inactive users cannot reuse upstream role claims (including `FCR Admin` / `System Administrator`) to bypass FCR authorization.
+- [ ] FCR role changes and user deactivation take effect on the next request.
+- [ ] ERMS FCR access permission gate denies module/API access before the user is permitted into FCR.
+- [ ] Module startup/migration path does not create the standalone local development admin account.
+
+
 This checklist is an acceptance aid, not evidence that production UAT has already passed.
 
 ## Security review
