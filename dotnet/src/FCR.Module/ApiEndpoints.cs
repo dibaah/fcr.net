@@ -16,7 +16,7 @@ public static class ApiEndpoints
 
     public static void MapApi(this WebApplication app)
     {
-        var api = app.MapGroup("/api").RequireAuthorization();
+        var api = app.MapGroup("/api").RequireAuthorization(PolicyNames.FcrModuleAccess);
 
         // ── Health / about ─────────────────────────────────────────────
         api.MapGet("/health", IResult (IOptions<FcrOptions> o) => Results.Ok(new

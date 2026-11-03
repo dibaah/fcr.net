@@ -6,6 +6,8 @@ public class User
     public string Username { get; set; } = "";
     public string DisplayName { get; set; } = "";
     public string Email { get; set; } = "";
+    /// <summary>Stable external ERMS subject identifier; null for standalone local users.</summary>
+    public string? ExternalId { get; set; }
     public string PasswordHash { get; set; } = "";
     public bool IsActive { get; set; } = true;
     public string CreatedAt { get; set; } = "";

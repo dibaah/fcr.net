@@ -14,7 +14,7 @@ public static class RequestEndpoints
 {
     public static void MapRequestApi(this WebApplication app)
     {
-        var req = app.MapGroup("/api/requests").RequireAuthorization();
+        var req = app.MapGroup("/api/requests").RequireAuthorization(PolicyNames.FcrModuleAccess);
 
         req.MapPost("/", async Task<IResult> (
             CreateRequestInput input, IRequestService svc, HttpContext http) =>
@@ -203,7 +203,7 @@ public static class RequestEndpoints
         });
 
         // ── In-app notifications (Phase 6, §9) ────────────────────────
-        var notif = app.MapGroup("/api/my/notifications").RequireAuthorization();
+        var notif = app.MapGroup("/api/my/notifications").RequireAuthorization(PolicyNames.FcrModuleAccess);
         notif.MapGet("/", async Task<IResult> (IRequestService svc, HttpContext http) =>
             Results.Ok(await svc.ListNotificationsAsync(CurrentUserId(http))));
         notif.MapPost("/{id:long}/read", async Task<IResult> (

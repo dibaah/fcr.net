@@ -30,6 +30,11 @@ public static class FcrModuleExtensions
             foreach (var role in RoleNames.All)
                 options.AddPolicy(role, policy => policy.RequireRole(role));
 
+            options.AddPolicy(PolicyNames.FcrModuleAccess,
+                policy => policy.RequireRole(RoleNames.FcrUser, RoleNames.FcrAdmin,
+                    RoleNames.Requester, RoleNames.Reviewer, RoleNames.Approver,
+                    RoleNames.SystemAdministrator));
+
             options.AddPolicy(PolicyNames.AdminConsole,
                 policy => policy.RequireRole(RoleNames.FcrAdmin, RoleNames.SystemAdministrator));
             options.AddPolicy(PolicyNames.RequesterAccess,
@@ -43,8 +48,12 @@ public static class FcrModuleExtensions
     }
 
     /// <summary>Adds FCR audit middleware. Call after UseAuthentication().</summary>
-    public static IApplicationBuilder UseFcrModule(this IApplicationBuilder app) =>
+    public static IApplicationBuilder UseFcrModule(this IApplicationBuilder app)
+    {
+        app.UseMiddleware<FcrIdentityMiddleware>();
         app.UseMiddleware<FCR.Web.Phase7AuditMiddleware>();
+        return app;
+    }
 
     /// <summary>
     /// Maps FCR feature endpoints into the host's route table. The host must
@@ -58,6 +67,7 @@ public static class FcrModuleExtensions
         app.MapApi();
         app.MapRequestApi();
         app.MapPhase7Reports();
+        app.MapFcrIdentityUsers();
         return app;
     }
 
@@ -68,5 +78,6 @@ public static class FcrModuleExtensions
         await using var scope = services.CreateAsyncScope();
         var migrator = scope.ServiceProvider.GetRequiredService<DatabaseMigrator>();
         await migrator.MigrateAsync(cancellationToken);
+        await UserSeeder.SeedRolesAsync(scope.ServiceProvider.GetRequiredService<FcrDbContext>());
     }
 }

@@ -89,11 +89,14 @@ public sealed class FcrDbContext(DbContextOptions<FcrDbContext> options) : DbCon
             e.Property(u => u.Username).HasColumnName("username").IsRequired();
             e.Property(u => u.DisplayName).HasColumnName("display_name");
             e.Property(u => u.Email).HasColumnName("email");
+            e.Property(u => u.ExternalId).HasColumnName("external_id").IsRequired(false);
             e.Property(u => u.PasswordHash).HasColumnName("password_hash");
             e.Property(u => u.IsActive).HasColumnName("is_active");
             e.Property(u => u.CreatedAt).HasColumnName("created_at");
             e.Property(u => u.UpdatedAt).HasColumnName("updated_at");
             e.HasIndex(u => u.Username).IsUnique().HasDatabaseName("idx_users_username");
+            e.HasIndex(u => u.ExternalId).IsUnique().HasDatabaseName("idx_users_external_id")
+                .HasFilter("external_id IS NOT NULL");
         });
 
         mb.Entity<Role>(e =>

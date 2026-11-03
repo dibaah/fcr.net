@@ -1,3 +1,5 @@
+using System.Security.Claims;
+
 namespace FCR.Infrastructure;
 
 /// <summary>Filesystem-backed options — parity with settings.json paths.</summary>
@@ -13,6 +15,9 @@ public sealed class FcrOptions
     public string AttachmentRoot { get; set; } = @"X:\1-DC";
     /// <summary>Centralized store for request attachments; default {DataDir}/request-attachments.</summary>
     public string RequestAttachmentDir { get; set; } = "";
+
+    /// <summary>Claim carrying the stable ERMS subject key mapped to FCR users.external_id.</summary>
+    public string IdentityExternalIdClaim { get; set; } = ClaimTypes.NameIdentifier;
 
     public string DbPath => Path.Combine(DataDir, "fcr_database.db");
 

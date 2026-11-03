@@ -702,6 +702,10 @@ namespace FCR.Infrastructure.Migrations
                         .HasColumnType("TEXT")
                         .HasColumnName("email");
 
+                    b.Property<string>("ExternalId")
+                        .HasColumnType("TEXT")
+                        .HasColumnName("external_id");
+
                     b.Property<bool>("IsActive")
                         .HasColumnType("INTEGER")
                         .HasColumnName("is_active");
@@ -726,6 +730,11 @@ namespace FCR.Infrastructure.Migrations
                     b.HasIndex("Username")
                         .IsUnique()
                         .HasDatabaseName("idx_users_username");
+
+                    b.HasIndex("ExternalId")
+                        .IsUnique()
+                        .HasDatabaseName("idx_users_external_id")
+                        .HasFilter("external_id IS NOT NULL");
 
                     b.ToTable("users", (string)null);
                 });
