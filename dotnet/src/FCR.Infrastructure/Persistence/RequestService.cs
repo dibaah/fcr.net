@@ -188,6 +188,8 @@ public sealed class RequestService(FcrDbContext db, AttachmentStore store, IFcrR
     public async Task<bool> DeleteAttachmentAsync(
         string id, long attachmentId, long userId, bool isAdmin, CancellationToken ct = default)
     {
+        if (await db.FcrRequests.AnyAsync(r => r.Id == id && r.ArchivePath != null, ct))
+            throw new FcrValidationException("Attachments cannot be changed after archiving");
         var a = await db.FcrAttachments
             .FirstOrDefaultAsync(x => x.Id == attachmentId && x.FcrRequestId == id, ct);
         if (a is null) return false;
