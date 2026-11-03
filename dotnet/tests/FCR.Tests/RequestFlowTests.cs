@@ -65,6 +65,19 @@ public class RequestFlowTests(ApiParityTests.Fixture fixture)
     }
 
     [Fact]
+    public async Task SubmitterCanUseTitleFieldAlias()
+    {
+        var admin = await Login("admin", "admin"); Assert.NotNull(admin);
+        var requester = await MakeUser(admin, "reqtitlealias", "Requester");
+        var response = await requester.PostAsJsonAsync("/api/requests",
+            new { title = "Title field request", justification = "Reason", description = "Details" });
+        Assert.Equal(HttpStatusCode.Created, response.StatusCode);
+        var dto = await Body(response);
+        Assert.Equal("Title field request", dto.GetProperty("title").GetString());
+        Assert.Equal("Title field request", dto.GetProperty("subject").GetString());
+    }
+
+    [Fact]
     public async Task Requester_Creates_And_Sees_Only_Own_Requests()
     {
         var admin = await Login("admin", "admin"); Assert.NotNull(admin);
