@@ -78,5 +78,6 @@ public static class FcrModuleExtensions
         await using var scope = services.CreateAsyncScope();
         var migrator = scope.ServiceProvider.GetRequiredService<DatabaseMigrator>();
         await migrator.MigrateAsync(cancellationToken);
+        await UserSeeder.SeedRolesAsync(scope.ServiceProvider.GetRequiredService<FcrDbContext>());
     }
 }
