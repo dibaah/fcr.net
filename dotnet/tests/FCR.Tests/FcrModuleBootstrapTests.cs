@@ -33,17 +33,21 @@ public class FcrModuleBootstrapTests
             await using var provider = services.BuildServiceProvider();
 
             await provider.InitializeFcrModuleAsync();
-            var users = provider.CreateScope().ServiceProvider.GetRequiredService<IUserService>();
-            var list = await users.ListUsersAsync();
-            var admin = Assert.Single(list);
-            Assert.Equal("erms-bootstrap", admin.Username);
-            Assert.Equal("erms-bootstrap-subject", admin.ExternalId);
-            Assert.Contains(RoleNames.FcrAdmin, admin.Roles);
-            Assert.Contains(RoleNames.FcrUser, admin.Roles);
-            Assert.DoesNotContain(list, u => u.Username == "admin");
+            using (var scope = provider.CreateScope())
+            {
+                var users = scope.ServiceProvider.GetRequiredService<IUserService>();
+                var list = await users.ListUsersAsync();
+                var admin = Assert.Single(list);
+                Assert.Equal("erms-bootstrap", admin.Username);
+                Assert.Equal("erms-bootstrap-subject", admin.ExternalId);
+                Assert.Contains(RoleNames.FcrAdmin, admin.Roles);
+                Assert.Contains(RoleNames.FcrUser, admin.Roles);
+                Assert.DoesNotContain(list, u => u.Username == "admin");
+            }
 
             await provider.InitializeFcrModuleAsync();
-            Assert.Single(await users.ListUsersAsync());
+            using (var scope = provider.CreateScope())
+                Assert.Single(await scope.ServiceProvider.GetRequiredService<IUserService>().ListUsersAsync());
         }
         finally
         {
