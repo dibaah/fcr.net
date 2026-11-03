@@ -134,8 +134,8 @@ Users enter ERMS, select FCR from the dashboard/navigation, and use FCR without 
 - Phase 1 has retargeted the .NET solution and CI to .NET 8 and added the hostable `FCR.Module` entry points. PR #5 CI (build + tests) passed; it is ready for review but not yet merged.
 - Phase 2 implementation is in PR #7: external ERMS subject mapping, FCR User role, and server-side module access policy; .NET 8 CI passed. Actual ERMS host claim configuration and end-to-end integration still require ERMS-side verification.
 - FCR module registration/endpoint mapping exists, but actual ERMS host integration and ERMS-side access gate/UI template are not verified.
-- Phase 2 identity/role mapping is implemented in PR #7 and .NET 8 CI passed; actual ERMS host verification remains required.
-- Phase 5 admin metadata and archive implementation is in PR #12: FCR-number folder, printable HTML form, attachment copies, archive retry, and linked `arch_loc`; CI/UAT remain pending.
+- Phase 2 identity/role mapping is implemented in `phase2-erms-identity-rbac`; PR #7 was closed without merge as the changes are being consolidated for main. .NET 8 CI passed on the implementation branch; actual ERMS host verification remains required.
+- Phase 5 admin metadata and archive implementation (contractor/subcontractor, FCR-number folder, printable HTML form, attachment copies, retry, linked `arch_loc`) was merged into the Phase 2 branch via PR #12. The combined Phase 2/5 branch is being prepared for main; host UAT remains pending.
 - Configurable sequential workflow and server archive integration are not considered complete until demonstrated in the actual host.
 
 ## 6. Decisions and assumptions
