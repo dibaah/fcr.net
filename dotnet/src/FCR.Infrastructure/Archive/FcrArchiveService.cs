@@ -1,3 +1,5 @@
+using System.Net;
+using System.Text;
 using System.Text.Json;
 using FCR.Application;
 using FCR.Domain;
@@ -36,6 +38,7 @@ public sealed class FcrArchiveService(AttachmentStore attachmentStore, IFolderSe
 
         Directory.CreateDirectory(folder);
         var archived = new List<object>();
+        var archivedFiles = new List<(long Id, string Name)>();
 
         foreach (var attachment in attachments.OrderBy(a => a.Id))
         {
@@ -52,6 +55,7 @@ public sealed class FcrArchiveService(AttachmentStore attachmentStore, IFolderSe
             var archiveName = $"ATT-{attachment.Id:D8}_{safeName}";
             var destination = Path.Combine(folder, archiveName);
             File.Copy(source, destination, overwrite: true);
+            archivedFiles.Add((attachment.Id, archiveName));
             archived.Add(new
             {
                 attachmentId = attachment.Id,
@@ -98,6 +102,59 @@ public sealed class FcrArchiveService(AttachmentStore attachmentStore, IFolderSe
                 File.Delete(temporaryPath);
         }
 
+        var htmlPath = Path.Combine(folder, $"{code}-request.html");
+        await File.WriteAllTextAsync(
+            htmlPath, BuildHtml(request, requesterUsername, code, archivedFiles),
+            new UTF8Encoding(false), ct);
+
         return Path.GetFullPath(folder);
+    }
+
+    private static string BuildHtml(
+        FcrRequest request, string requesterUsername, string fcrCode,
+        IReadOnlyList<(long Id, string Name)> attachments)
+    {
+        static string E(string? value) => WebUtility.HtmlEncode(value ?? "");
+        static string Row(string label, string? value) =>
+            $"<tr><th>{E(label)}</th><td>{E(value)}</td></tr>";
+
+        var files = attachments.Count == 0
+            ? "<p>No attachments.</p>"
+            : "<ul>" + string.Join("", attachments.Select(a =>
+                $"<li><a href=\"{Uri.EscapeDataString(a.Name)}\">{E(a.Name)}</a></li>")) + "</ul>";
+
+        return $@"<!doctype html>
+<html lang=""en"">
+<head>
+<meta charset=""utf-8"">
+<meta name=""viewport"" content=""width=device-width,initial-scale=1"">
+<title>{E(fcrCode)} — FCR Request</title>
+<style>
+body{{font:14px/1.5 Arial,sans-serif;max-width:900px;margin:32px auto;padding:0 24px;color:#222}}
+h1{{border-bottom:2px solid #333;padding-bottom:8px}}table{{width:100%;border-collapse:collapse}}
+th,td{{border:1px solid #ccc;padding:8px;text-align:left;vertical-align:top}}
+th{{width:190px;background:#f3f3f3}}.text{{white-space:pre-wrap;overflow-wrap:anywhere}}
+@media print{{body{{margin:0;max-width:none}}}}
+</style>
+</head>
+<body>
+<h1>FCR Request Archive</h1>
+<table>
+{Row("FCR Number", fcrCode)}
+{Row("Request Number", request.RequestNumber)}
+{Row("Title", request.Subject)}
+{Row("Category", request.Category)}
+{Row("Contractor", request.Contractor)}
+{Row("Subcontractor", request.Subcontractor)}
+{Row("Requester", requesterUsername)}
+{Row("Submitted At", request.SubmittedAt)}
+{Row("Request Status", request.SubmissionStatus)}
+{Row("Linked FCR Record ID", request.LinkedFcrId?.ToString())}
+</table>
+<h2>Justification</h2><div class=""text"">{E(request.Justification)}</div>
+<h2>Description</h2><div class=""text"">{E(request.Description)}</div>
+<h2>Attachments</h2>{files}
+</body>
+</html>";
     }
 }
