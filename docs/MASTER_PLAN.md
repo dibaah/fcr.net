@@ -1,163 +1,91 @@
-# FCR inside ERMS — Master Plan
+# FCR inside ERMS — .NET Master Plan
 
-**Status:** Planning baseline updated  
+**Status:** .NET implementation baseline; Python edition split into its own repository  
 **Target host:** Existing ERMS ASP.NET Core 8 application  
-**Integration decision:** FCR will run inside the same ASP.NET Core application as a module/library. It will not be deployed as a separate FCR web application with SSO.
+**Integration decision:** FCR .NET runs inside ERMS as a module/library, not as a separate service.
 
 ## 1. Product goal
 
-Deliver FCR as an integrated ERMS module. ERMS remains the application shell and owns the user experience template, authentication, and primary access gate. FCR owns its domain workflows, records, audit trail, and FCR-specific permissions.
+Deliver FCR as an integrated ERMS module. ERMS owns the shell, authentication, navigation and primary module-access gate. FCR owns domain workflows, FCR records, audit history and FCR-specific authorization.
 
-Users enter ERMS, select FCR from the dashboard/navigation, and use FCR without a separate login.
+## 2. Repository boundaries
 
-## 2. Architecture baseline
+- **This repository — [fcr.net](https://github.com/dibaah/fcr.net):** .NET 8 module, tests, .NET integration/deployment documentation.
+- **Python repository — [fcr-python](https://github.com/dibaah/fcr-python):** Python/FastAPI standalone dashboard, frontend, tests, Python requirements and Python-specific plan.
+- Python source and Python runtime artifacts should not be reintroduced here.
+- Do not move or delete production data as part of repository separation. Runtime databases, secrets, settings, backups and user uploads are not source-control content.
+
+## 3. Architecture baseline
 
 - **Host:** ERMS ASP.NET Core 8 application.
-- **Module shape:** FCR module/class library hosted in-process by ERMS (modular-monolith approach).
-- **Authentication:** Reuse the authenticated ERMS identity; no standalone FCR login.
-- **Authorization:** ERMS Admin controls whether a user may access the FCR module. FCR additionally enforces FCR-specific roles and permissions server-side.
-- **Roles:** FCR Admin and FCR User, with the FCR Admin role including the project owner/admin as configured. Do not rely on UI hiding as authorization.
-- **UI:** ERMS Admin integrates FCR screens into the ERMS UI template. FCR should provide module functionality/API and integration guidance; standalone UI is not the primary target.
-- **Framework compatibility:** The FCR .NET solution targets .NET 8 and the CI build/test workflow is green.
-- **Data:** Preserve existing FCR records and database history. Any schema conversion/migration must be backed up, tested, and reversible.
-- **Files:** FCR-number-based archive folders and attachment storage must be implemented against the actual ERMS/server storage configuration, with path validation and access controls.
+- **Module shape:** FCR module/class library hosted in-process by ERMS.
+- **Authentication:** Reuse authenticated ERMS identity; no separate FCR login.
+- **Authorization:** ERMS controls module access; FCR enforces FCR roles server-side.
+- **Roles:** FCR Admin and FCR User.
+- **UI:** ERMS Admin integrates module screens/navigation into ERMS UI.
+- **Data:** Preserve existing FCR records. Migrations must be backed up, tested and reversible.
+- **Archive:** Numbered FCR folders and attachment storage use configured ERMS/server storage with path validation and access controls.
 
-## 3. Functional requirements
+## 4. Functional requirements
 
-### 3.1 FCR access and roles
-- ERMS Admin grants/revokes access to the FCR module.
-- FCR Admin manages FCR-specific permissions/roles where authorized.
-- FCR User can perform only permitted FCR actions.
-- All protected operations are authorized on the server.
+### Submitter
+- Submit Title, Justification, Description and allowed attachments.
+- Track own requests and status.
 
-### 3.2 Submitter
-- Create an FCR using the initial required fields:
-  - Title
-  - Justification
-  - Description
-- Submit the FCR into the configured workflow.
-- Upload attachments where allowed.
+### Workflow
+- Configurable sequential/parallel reviewer and approver assignment.
+- Record decisions, timestamps, history and audit metadata.
+- Business rules for rejection, revision, reassignment and cancellation require UAT confirmation.
 
-### 3.3 Workflow and approvals
-- ERMS Admin/configured workflow administrator defines routing after submission.
-- Workflow supports configurable reviewers/approvers and sequential signing.
-- Each step records assigned reviewer, decision, timestamp, and relevant audit metadata.
-- Pending work remains pending until the appropriate step is completed.
-- Define behavior for rejection, return-for-revision, reassignment, and cancellation before implementation.
+### FCR Admin
+- Assign official FCR number, category, contractor/subcontractor and required metadata.
+- Archive request form and attachments under the FCR-number folder.
+- Support retry/recovery and auditable folder/file operations.
 
-### 3.4 FCR Admin processing
-- Submitted FCR reaches the designated FCR Admin/processing queue.
-- FCR Admin assigns the official FCR number, category, contractor/subcontractor, and other required administrative metadata.
-- FCR number drives creation/resolution of the archive folder.
-- Save the FCR form and its attachments in the appropriate folder.
-- Folder/file actions must be safe, permission-controlled, and auditable.
+### Audit and reporting
+- Keep server-side authorization, audit trail and reports.
+- Validate report accuracy and retention policy during UAT.
 
-### 3.5 Audit and reports
-- Retain audit logging and reporting work already implemented, subject to review against ERMS identity and authorization.
-- Reports must use accurate workflow/business data and be validated during UAT.
-- Retention policy and report sign-off remain explicit acceptance items.
+## 5. Delivery phases and status
 
-## 4. Delivery phases
+| Phase | Scope | Current status |
+|---|---|---|
+| 0 | ERMS integration discovery | Findings documented; actual ERMS host conventions still need validation |
+| 1 | .NET 8 module foundation | Implemented and merged; build/tests pass |
+| 2 | ERMS identity and authorization | FCR-side mapping/gates/tests implemented; actual ERMS claim and host access gate remain external validation |
+| 3 | Submitter form and tracking | Implemented/tested |
+| 4 | Review/approval workflow | Implemented/tested; business behavior needs UAT sign-off |
+| 5 | Admin metadata and archive | Implemented/tested; server storage/service account requires ERMS-side validation |
+| 6 | ERMS UI integration | External ERMS Admin work; ERMS source/UI is not in this repository |
+| 7 | Security, audit, reports and UAT | Code/tests exist; business UAT, report accuracy and retention signoff remain |
+| 8 | Data migration/production readiness | Backup, migration and rollback rehearsal pending; production cutover requires explicit approval |
 
-### Phase 0 — Integration discovery and compatibility
-- Inspect ERMS hosting conventions, module registration, identity model, role/claim source, DI, routing, and deployment constraints.
-- Inspect FCR repository structure, current .NET target, database provider/schema, migrations, workflow implementation, and tests.
-- Confirm the supported .NET 8 dependency set and integration contract.
-- Produce a concise integration design before implementation.
+## 6. Completed .NET work
 
-**Exit gate:** Host/module contract, identity mapping, data strategy, and storage strategy are documented and agreed.
+- Hostable .NET 8 module/library and ERMS integration contract.
+- External ERMS identity mapping and FCR role authorization.
+- Submitter Title/Justification/Description, attachment handling and tracking.
+- Workflow definitions, reviewer assignment, decisions and history.
+- Admin FCR metadata and numbered-folder archive with request JSON/HTML and attachment copies.
+- Archive retry/immutability behavior and attachment path safety.
+- Audit/report endpoints and authorization regression tests.
+- Fake ERMS-host integration tests (mapped identity, unauthorized access, anonymous 401).
+- ERMS module UAT checklist.
 
-### Phase 1 — Module foundation
-- Refactor FCR into a hostable module/library without a separate application startup/login.
-- Provide clear registration/DI and endpoint integration for ERMS.
-- Keep standalone/demo hosting only if useful for development and tests; it must not become the production integration model.
-- Establish .NET 8 build and automated tests.
+## 7. External UAT / production gates
 
-**Exit gate:** Module builds and runs within an ERMS-like .NET 8 host.
+- ERMS Admin wires FCR navigation and screens into actual ERMS UI.
+- Configure/verify actual stable ERMS identity claim and module access gate.
+- Verify archive share permissions using ERMS service account.
+- Confirm database storage, backup and concurrency strategy. Do not use SQLite on unsupported shared/network storage.
+- Validate workflow routing, report accuracy, audit retention and security.
+- Rehearse backup/migration/rollback on a copy.
+- **No production deployment/cutover is authorized by this plan.**
 
-### Phase 2 — ERMS identity and authorization
-- Map ERMS identity into FCR.
-- Implement ERMS-level FCR access gate and FCR Admin/User authorization.
-- Add authorization tests for anonymous, ERMS-ineligible, FCR User, and FCR Admin scenarios.
+## 8. Working protocol
 
-**Exit gate:** Access is enforced server-side and role tests pass.
-
-### Phase 3 — Core submitter workflow
-- Implement/verify Title, Justification, Description submission.
-- Persist submissions and attachments metadata.
-- Add submitter view/status and tests.
-
-**Exit gate:** A permitted user can submit and track an FCR end-to-end.
-
-### Phase 4 — Configurable review and sequential approval
-- Implement workflow configuration and reviewer assignment.
-- Support sequential approvals, pending queues, decisions, and workflow history.
-- Specify and test rejection/return/reassignment/cancellation behavior.
-
-**Exit gate:** Workflow scenarios pass automated tests and business review.
-
-### Phase 5 — FCR Admin processing and archive
-- Implement FCR Admin processing queue.
-- Capture official number, category, contractor/subcontractor, and required metadata.
-- Create/resolve the numbered folder and save form plus attachments.
-- Validate storage permissions, filename/path safety, and failure recovery.
-
-**Exit gate:** A processed FCR and its attachments are correctly archived and retrievable.
-
-### Phase 6 — ERMS UI integration
-- Integrate module routes/API and screens into ERMS-owned UI template.
-- Confirm navigation, layout, and interaction with ERMS conventions.
-- UI styling is owned by ERMS integration, not a standalone FCR redesign.
-
-**Exit gate:** ERMS users can navigate and complete FCR tasks inside the host app.
-
-### Phase 7 — Security, audit, reports, and UAT
-- Complete authorization regression tests, audit verification, report validation, and security review.
-- Confirm audit retention policy and report accuracy sign-off.
-- Complete business UAT and document outstanding risks.
-
-**Exit gate:** Security/UAT approvals recorded. Existing audit/report work alone does not mean Phase 7 is accepted.
-
-### Phase 8 — Data migration and production readiness
-- Back up existing data and validate migration on a copy.
-- Reconcile record counts, identifiers, relationships, attachments, and folder links.
-- Prepare rollback, deployment, monitoring, and operational support steps.
-- Production cutover requires explicit approval; it is not authorized by this plan.
-
-**Exit gate:** Migration/UAT/rollback checklist approved and cutover explicitly authorized.
-
-## 5. Current known status (based on prior repository work; verify against current branch/CI before relying on it)
-
-- **Phase 1 complete and merged:** .NET 8 compatibility and the in-process `FCR.Module` registration/mapping foundation are on main (PR #5).
-- **Phase 2 complete in FCR code and merged:** external ERMS subject mapping, FCR User/Admin roles, server-side module authorization, and FCR Admin identity mapping endpoints are on main (merged with the Phase 5 integration PR). A fake ERMS-host integration test now validates the in-process middleware/identity/authorization pipeline; actual ERMS claim name/configuration and host-specific UI/access gate still need ERMS-side verification.
-- **Phase 3 complete in FCR code:** submitter creates a request with Title/Justification/Description, tracks own requests, and uploads attachments. The `title` alias is merged (PR #19) while legacy `subject` remains compatible.
-- **Phase 4 workflow implementation exists:** configurable workflow definitions, sequential/parallel review mode, reviewer/approver assignment, decisions, and history are implemented/tested in the .NET module. Exact business behavior and UAT signoff remain pending.
-- **Phase 5 complete in FCR code and merged:** FCR Admin metadata (number/category/contractor/subcontractor), numbered folder archive, request JSON/HTML manifests, attachment copies, retry behavior, and linked `arch_loc` are implemented (PR #14).
-- **Phase 6 host integration remains external:** the ERMS project/UI template is not in this repository. ERMS Admin owns the navigation/screen template; the module registration and API integration contract are documented.
-- Phase 7 audit/report endpoints and automated anonymous 401 + authenticated non-admin 403 report-access regression tests are merged. Attachment upload path/size cleanup tests are also in the security suite. Business UAT, report accuracy signoff, and audit-retention policy remain open.
-- Phase 8 production data migration, rollback rehearsal, and cutover are not started and require explicit approval.
-
-## 6. Decisions and assumptions
-
-**Confirmed**
-- FCR is hosted in the same ASP.NET Core application as ERMS via module/library.
-- ERMS owns the shell/UI template and primary authentication/access gate.
-- FCR-specific Admin/User roles and server-side checks are still required.
-- Existing FCR data must be preserved.
-
-**To verify during Phase 0 (do not repeatedly ask unless a real blocker emerges)**
-- ERMS identity key and role/claim conventions.
-- Database engine/provider and preferred module data-access boundary.
-- Whether workflow configuration is managed by ERMS or by FCR Admin UI/API.
-- Archive root, server service account permissions, and attachment size/type policy.
-- Exact rejection/return/reassignment/cancellation rules.
-- Required fields beyond the initial submitter fields and admin metadata.
-
-## 7. Working protocol
-
-- Use this plan as the shared project baseline in subsequent work.
+- Keep .NET work in this repository and Python work in dibaah/fcr-python.
+- Preserve existing data and keep runtime/local config out of Git.
+- Use reviewable PRs, tests and small changes.
 - Do not ask the user to restate confirmed requirements.
-- Ask only one focused question when an unresolved decision blocks the next concrete step; otherwise inspect the repository/ERMS integration materials and make progress.
-- Work in small, testable phases and report what changed, tests, remaining blockers, and next step.
-- Preserve backups and use PRs for reviewable changes.
-- Do not merge/deploy/cut over production without explicit approval.
+- Production deployment/cutover remains a separate explicit approval gate.
