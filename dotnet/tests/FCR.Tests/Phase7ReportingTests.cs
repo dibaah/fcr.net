@@ -30,7 +30,12 @@ public sealed class Phase7ReportingTests : IClassFixture<Phase7ReportingTests.Fi
     }
 
     private readonly HttpClient _client;
-    public Phase7ReportingTests(Fixture fixture) => _client = fixture.CreateClient();
+    private readonly Fixture _fixture;
+    public Phase7ReportingTests(Fixture fixture)
+    {
+        _fixture = fixture;
+        _client = fixture.CreateClient();
+    }
 
     public async Task InitializeAsync()
     {
@@ -61,6 +66,29 @@ public sealed class Phase7ReportingTests : IClassFixture<Phase7ReportingTests.Fi
         using var anonymous = new Fixture().CreateClient();
         var response = await anonymous.GetAsync("/api/admin/reports/workflow-summary");
         Assert.Equal(HttpStatusCode.Unauthorized, response.StatusCode);
+    }
+
+    [Fact]
+    public async Task AdminReports_DenyAuthenticatedNonAdmin()
+    {
+        var username = $"phase7_nonadmin_{Guid.NewGuid():N}";
+        var create = await _client.PostAsJsonAsync("/api/admin/users",
+            new Dictionary<string, object?>
+            {
+                ["username"] = username,
+                ["display_name"] = "Phase 7 Non-Admin",
+                ["password"] = "pass1234",
+                ["roles"] = new[] { "Requester" },
+            });
+        Assert.Equal(HttpStatusCode.Created, create.StatusCode);
+
+        using var requester = _fixture.CreateClient();
+        var login = await requester.PostAsJsonAsync("/api/auth/login",
+            new Dictionary<string, object?> { ["username"] = username, ["password"] = "pass1234" });
+        Assert.Equal(HttpStatusCode.OK, login.StatusCode);
+
+        var response = await requester.GetAsync("/api/admin/reports/workflow-summary");
+        Assert.Equal(HttpStatusCode.Forbidden, response.StatusCode);
     }
 
     [Fact]

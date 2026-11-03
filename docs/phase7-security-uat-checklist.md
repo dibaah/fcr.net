@@ -18,7 +18,7 @@ This checklist is an acceptance aid, not evidence that production UAT has alread
 
 - [x] Admin report routes are grouped under the `AdminConsole` authorization policy.
 - [x] Automated regression test: anonymous access to admin reports returns HTTP 401.
-- [ ] Automated test: authenticated requester/reviewer without an admin role receives HTTP 403.
+- [x] Automated regression test: authenticated Requester without an admin role receives HTTP 403.
 - [ ] Confirm production identity provider and role mapping (AD/Entra decision remains open).
 - [ ] Confirm cookie settings behind production HTTPS: Secure, HttpOnly, SameSite, expiration, and proxy configuration.
 - [ ] Confirm audit log table permissions prevent application users from altering/deleting audit records outside approved retention/admin procedures.
