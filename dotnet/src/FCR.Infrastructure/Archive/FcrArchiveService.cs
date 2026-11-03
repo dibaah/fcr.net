@@ -74,6 +74,16 @@ public sealed class FcrArchiveService(
         request.ArchivePath = archivePath;
         request.ArchivedAt = archivedAt;
         request.UpdatedAt = archivedAt;
+        if (request.LinkedFcrId.HasValue)
+        {
+            var linked = await db.Fcrs.FirstOrDefaultAsync(f => f.Id == request.LinkedFcrId.Value, ct);
+            if (linked is not null)
+            {
+                linked.ArchLoc = archivePath;
+                linked.LastUpdate = $"Archived {archivedAt}";
+                linked.UpdatedAt = archivedAt;
+            }
+        }
         await db.SaveChangesAsync(ct);
 
         return new ArchiveInfoDto(
