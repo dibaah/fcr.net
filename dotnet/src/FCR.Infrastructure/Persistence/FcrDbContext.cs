@@ -25,6 +25,7 @@ public sealed class FcrDbContext(DbContextOptions<FcrDbContext> options) : DbCon
     public DbSet<FcrReview> FcrReviews => Set<FcrReview>();
     public DbSet<FcrNotification> FcrNotifications => Set<FcrNotification>();
     public DbSet<WorkflowDefinition> WorkflowDefinitions => Set<WorkflowDefinition>();
+    public DbSet<FcrAuditLog> FcrAuditLogs => Set<FcrAuditLog>();
 
     protected override void OnModelCreating(ModelBuilder mb)
     {
@@ -264,6 +265,24 @@ public sealed class FcrDbContext(DbContextOptions<FcrDbContext> options) : DbCon
             e.HasIndex(n => n.UserId).HasDatabaseName("idx_notifications_user");
             e.HasOne(n => n.User).WithMany()
                 .HasForeignKey(n => n.UserId).OnDelete(DeleteBehavior.Restrict);
+        });
+
+        mb.Entity<FcrAuditLog>(e =>
+        {
+            e.ToTable("fcr_audit_logs");
+            e.HasKey(a => a.Id);
+            e.Property(a => a.Id).HasColumnName("id").ValueGeneratedOnAdd();
+            e.Property(a => a.UserId).HasColumnName("user_id");
+            e.Property(a => a.Username).HasColumnName("username");
+            e.Property(a => a.Action).HasColumnName("action").IsRequired();
+            e.Property(a => a.HttpMethod).HasColumnName("http_method").IsRequired();
+            e.Property(a => a.Path).HasColumnName("path").IsRequired();
+            e.Property(a => a.StatusCode).HasColumnName("status_code");
+            e.Property(a => a.RequestId).HasColumnName("request_id");
+            e.Property(a => a.CreatedAtUtc).HasColumnName("created_at_utc");
+            e.HasIndex(a => a.CreatedAtUtc).HasDatabaseName("idx_audit_created_at");
+            e.HasIndex(a => new { a.UserId, a.CreatedAtUtc }).HasDatabaseName("idx_audit_user_created_at");
+            e.HasIndex(a => a.RequestId).HasDatabaseName("idx_audit_request");
         });
 
         mb.Entity<WorkflowDefinition>(e =>
