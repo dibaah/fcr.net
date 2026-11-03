@@ -8,8 +8,6 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 namespace FCR.Infrastructure.Migrations
 {
-    [DbContext(typeof(FcrDbContext))]
-    [Migration("20261103193000_AddExternalIdentityMapping")]
     partial class AddExternalIdentityMapping
     {
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
