@@ -42,8 +42,9 @@ public sealed class AttachmentStore(IOptions<FcrOptions> options)
         Directory.CreateDirectory(dir);
         var stored = $"{Guid.NewGuid():N}_{safe}";
         var path = Path.Combine(dir, stored);
-        await using (var fs = new FileStream(path, FileMode.CreateNew, FileAccess.Write))
+        try
         {
+            await using var fs = new FileStream(path, FileMode.CreateNew, FileAccess.Write);
             var buffer = new byte[81920];
             long total = 0;
             int n;
@@ -55,15 +56,25 @@ public sealed class AttachmentStore(IOptions<FcrOptions> options)
                 await fs.WriteAsync(buffer.AsMemory(0, n), ct);
             }
         }
+        catch
+        {
+            // Remove partially written content on size limit, cancellation, or I/O failure.
+            try { File.Delete(path); } catch (IOException) { }
+            throw;
+        }
         return Path.Combine(requestId, stored);
     }
 
     /// <summary>Resolves a stored relative path inside the attachment root; rejects traversal.</summary>
     public string Resolve(string relativeStoredName)
     {
-        var root = Path.GetFullPath(RootDir);
+        var root = Path.TrimEndingDirectorySeparator(Path.GetFullPath(RootDir));
         var full = Path.GetFullPath(Path.Combine(root, relativeStoredName));
-        if (!full.StartsWith(root + Path.DirectorySeparatorChar, StringComparison.Ordinal))
+        var rootPrefix = root + Path.DirectorySeparatorChar;
+        var comparison = OperatingSystem.IsWindows()
+            ? StringComparison.OrdinalIgnoreCase
+            : StringComparison.Ordinal;
+        if (!full.StartsWith(rootPrefix, comparison))
             throw new FcrValidationException("Invalid attachment path");
         return full;
     }

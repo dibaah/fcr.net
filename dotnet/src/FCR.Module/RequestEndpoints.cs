@@ -63,9 +63,9 @@ public static class RequestEndpoints
             if (!await CanView(id, svc, http)) return Detail(404, "Request not found");
             try
             {
+                using var stream = file.OpenReadStream();
                 var a = await svc.AddAttachmentAsync(
-                    id, CurrentUserId(http), file.FileName, file.ContentType,
-                    file.OpenReadStream());
+                    id, CurrentUserId(http), file.FileName, file.ContentType, stream);
                 return Results.Json(a, statusCode: 201);
             }
             catch (FcrNotFoundException) { return Detail(404, "Request not found"); }
