@@ -5,7 +5,7 @@
 
 ## Repository facts
 
-- The FCR .NET solution previously targeted `net10.0`; PR #5 retargets the projects and CI to `net8.0` and passed the .NET 8 build/test workflow.
+- The FCR .NET solution targets `net8.0`; this compatibility/module foundation is merged to main (PR #5), and .NET 8 CI passed.
 - `FCR.Module` now exposes `AddFcrModule`, `UseFcrModule`, `MapFcrModule`, and `InitializeFcrModuleAsync`.
 - `FCR.Web` is retained as a standalone development/parity-test host. It owns local cookie login and admin seeding; ERMS should not map `MapAuthApi()`.
 - FCR APIs and workflow records use a local numeric FCR user ID for owner/reviewer/comment/attachment foreign keys.
@@ -37,6 +37,7 @@ app.MapFcrModule();
 - FCR roles are assigned through FCR Admin/System Administrator management endpoints. Roles include `FCR User`, `FCR Admin`, `Requester`, `Reviewer`, `Approver`, and `System Administrator`.
 - Unmapped/inactive ERMS users remain authenticated in ERMS but receive no FCR roles/internal ID, so protected FCR routes deny access.
 - ERMS identity mapping is not automatic; administrators must map each ERMS subject to an FCR user and roles.
+- FCR Admin processing assigns number/category/contractor/subcontractor; archive writes JSON + printable HTML request forms and copies attachments into the FCR-number folder. The linked FCR record receives the archive path.
 
 ## Items that require actual ERMS-side confirmation
 
