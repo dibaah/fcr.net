@@ -231,6 +231,8 @@ public class RequestFlowTests(ApiParityTests.Fixture fixture)
         var archivePath = archiveDto.GetProperty("archive_path").GetString()!;
         var formPath = Path.Combine(archivePath, archiveDto.GetProperty("form_file_name").GetString()!);
         Assert.True(File.Exists(formPath));
+        var linkedArchived = await Body(await admin.GetAsync($"/api/fcr/{linkedId}"));
+        Assert.Equal(archivePath, linkedArchived.GetProperty("arch_loc").GetString());
         var html = await File.ReadAllTextAsync(formPath);
         Assert.Contains("Linked FCR test", html);
         Assert.Contains("Main Contractor", html);
