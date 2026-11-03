@@ -294,6 +294,16 @@ namespace FCR.Infrastructure.Migrations
                         .HasColumnType("TEXT")
                         .HasColumnName("category");
 
+                    b.Property<string>("Contractor")
+                        .IsRequired()
+                        .HasColumnType("TEXT")
+                        .HasColumnName("contractor");
+
+                    b.Property<string>("Subcontractor")
+                        .IsRequired()
+                        .HasColumnType("TEXT")
+                        .HasColumnName("subcontractor");
+
                     b.Property<string>("CreatedAt")
                         .IsRequired()
                         .HasColumnType("TEXT")
