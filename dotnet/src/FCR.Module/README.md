@@ -24,7 +24,26 @@ app.MapFcrModule();       // FCR APIs, reports, and health probes
 - The ERMS-level permission gate for opening FCR.
 - Identity/role claim mapping and deployment lifecycle.
 
-`AddFcrModule` does not register a login/authentication scheme, seed a local admin account, or automatically apply migrations. This avoids the module replacing ERMS auth or modifying the DB during an uncontrolled host startup.
+`AddFcrModule` does not register a login/authentication scheme or automatically apply migrations. `InitializeFcrModuleAsync` seeds FCR roles and, only when explicitly configured and the FCR user table is empty, creates the first ERMS-mapped FCR Admin (`FCR Admin` + `FCR User`). It never creates the standalone `admin/admin` demo account.
+
+## First FCR Admin bootstrap
+
+For the first controlled module initialization only, configure the stable ERMS subject and username:
+
+```json
+{
+  "Fcr": {
+    "BootstrapAdmin": {
+      "ExternalId": "stable-ERMS-subject",
+      "Username": "initial-fcr-admin",
+      "DisplayName": "Initial FCR Admin",
+      "Email": "admin@example.com"
+    }
+  }
+}
+```
+
+If the FCR user table is empty, `InitializeFcrModuleAsync()` creates this mapped account with `FCR Admin` and `FCR User` roles. If any FCR user already exists, bootstrap does nothing and does not change existing roles. Without this configuration, no admin user is created. Remove the bootstrap setting after initialization if your deployment policy requires it.
 
 ## Database initialization
 
