@@ -14,7 +14,7 @@ permissions:
 
 jobs:
   dotnet:
-    name: Restore, build, and test (.NET 10)
+    name: Restore, build, and test (.NET 8)
     runs-on: ubuntu-latest
 
     steps:
@@ -24,7 +24,7 @@ jobs:
       - name: Set up .NET SDK
         uses: actions/setup-dotnet@v4
         with:
-          dotnet-version: 10.0.x
+          dotnet-version: 8.0.x
 
       - name: Restore
         working-directory: dotnet
