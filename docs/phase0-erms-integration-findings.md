@@ -35,6 +35,7 @@ app.MapFcrModule();
 - The FCR module maps the configured external subject claim (`Fcr:Identity:ExternalIdClaim`, default `ClaimTypes.NameIdentifier`) to `users.external_id`.
 - FCR creates a numeric internal user ID claim and FCR role claims from the mapped database row; it does not trust upstream role claims as FCR roles.
 - FCR roles are assigned through FCR Admin/System Administrator management endpoints. Roles include `FCR User`, `FCR Admin`, `Requester`, `Reviewer`, `Approver`, and `System Administrator`.
+- The module has a one-time explicit bootstrap option for the first ERMS-mapped FCR Admin when the FCR user table is empty; it never creates the standalone `admin/admin` account.
 - Unmapped/inactive ERMS users remain authenticated in ERMS but receive no FCR roles/internal ID, so protected FCR routes deny access.
 - ERMS identity mapping is not automatic; administrators must map each ERMS subject to an FCR user and roles.
 - FCR Admin processing assigns number/category/contractor/subcontractor; archive writes JSON + printable HTML request forms and copies attachments into the FCR-number folder. The linked FCR record receives the archive path.
