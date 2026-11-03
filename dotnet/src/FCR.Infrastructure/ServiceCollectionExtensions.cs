@@ -24,7 +24,7 @@ public static class ServiceCollectionExtensions
                 ?? config["Fcr:DataDir"]
                 ?? Path.Combine(AppContext.BaseDirectory, "data");
             o.BackupLocation = config["Fcr:BackupLocation"] ?? "backups";
-            o.AttachmentRoot = config["Fcr:AttachmentRoot"] ?? o.AttachmentRoot;
+            o.AttachmentRoot = config["Fcr:AttachmentRoot"];
             o.RequestAttachmentDir = config["Fcr:RequestAttachmentDir"] ?? o.RequestAttachmentDir;
             o.IdentityExternalIdClaim = config["Fcr:Identity:ExternalIdClaim"]
                 ?? o.IdentityExternalIdClaim;
