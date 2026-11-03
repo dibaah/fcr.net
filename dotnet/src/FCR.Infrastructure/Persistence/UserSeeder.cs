@@ -6,7 +6,7 @@ using Microsoft.EntityFrameworkCore;
 namespace FCR.Infrastructure.Persistence;
 
 /// <summary>
-/// Seeds the five master-plan roles and, when the users table is empty, a single
+/// Seeds the FCR module and workflow roles and, when the users table is empty, a single
 /// development System Administrator account (password from Fcr:SeedAdminPassword).
 /// Dev-auth only — production credentials come from the company's chosen provider.
 /// </summary>
