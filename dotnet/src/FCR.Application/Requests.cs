@@ -10,7 +10,7 @@ public record RequestDetailDto(
     string Id, string RequestNumber, long RequesterUserId, string RequesterUsername,
     string Subject, string Justification, string Description, string SubmissionStatus,
     string? SubmittedAt, string CreatedAt, string UpdatedAt, long? LinkedFcrId,
-    string FcrCode, string Category,
+    string FcrCode, string Category, string Contractor, string Subcontractor,
     List<CommentDto> Comments, List<AttachmentDto> Attachments, WorkflowDto? Workflow);
 public record CommentDto(long Id, long UserId, string Username, string CommentText,
     string CommentType, string CreatedAt);
@@ -22,7 +22,8 @@ public record WorkflowDto(long Id, string WorkflowStatus, string ReviewMode,
 public record StageDto(string StageName, int StageOrder, string DecisionRule,
     string StageStatus, List<ReviewerAssignmentDto> Reviewers);
 public record ReviewerAssignmentDto(long UserId, string Username, int Order, string Status);
-public record AdminUpdateInput(string? FcrCode, string? Category, long? LinkedFcrId);
+public record AdminUpdateInput(string? FcrCode, string? Category, long? LinkedFcrId,
+    string? Contractor = null, string? Subcontractor = null);
 public record WorkflowPrepInput(string ReviewMode, List<long>? ReviewerUserIds,
     string? DecisionRule, List<long>? ApproverUserIds = null,
     long? WorkflowDefinitionId = null);

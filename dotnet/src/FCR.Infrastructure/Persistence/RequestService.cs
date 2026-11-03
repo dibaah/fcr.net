@@ -2,6 +2,7 @@ using FCR.Application;
 using FCR.Domain;
 using FCR.Domain.Entities;
 using FCR.Infrastructure.Attachments;
+using FCR.Infrastructure.Archive;
 using Microsoft.EntityFrameworkCore;
 
 namespace FCR.Infrastructure.Persistence;
@@ -11,7 +12,7 @@ namespace FCR.Infrastructure.Persistence;
 /// Requests stay logically separate from `fcr` records; the Request ID is a
 /// UUID created at submission, the FCR Code is assigned later by the admin.
 /// </summary>
-public sealed class RequestService(FcrDbContext db, AttachmentStore store, IFcrRepository fcrRepo)
+public sealed class RequestService(FcrDbContext db, AttachmentStore store, IFcrRepository fcrRepo, FcrArchiveService archiveService)
     : IRequestService
 {
     private static string Now() => DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss");
@@ -165,6 +166,8 @@ public sealed class RequestService(FcrDbContext db, AttachmentStore store, IFcrR
         db.FcrAttachments.Add(a);
         req.UpdatedAt = Now();
         await db.SaveChangesAsync(ct);
+        if (!string.IsNullOrWhiteSpace(req.FcrCode))
+            await ArchiveRequestAsync(req, ct);
         return await AttachmentDtoAsync(a.Id, ct);
     }
 
@@ -220,6 +223,8 @@ public sealed class RequestService(FcrDbContext db, AttachmentStore store, IFcrR
             req.FcrCode = code;
         }
         if (input.Category is not null) req.Category = input.Category.Trim();
+        if (input.Contractor is not null) req.Contractor = input.Contractor.Trim();
+        if (input.Subcontractor is not null) req.Subcontractor = input.Subcontractor.Trim();
         if (input.LinkedFcrId.HasValue)
         {
             if (!await db.Fcrs.AnyAsync(f => f.Id == input.LinkedFcrId.Value, ct))
@@ -230,6 +235,8 @@ public sealed class RequestService(FcrDbContext db, AttachmentStore store, IFcrR
             req.SubmissionStatus = RequestStatuses.UnderAdminReview;
         req.UpdatedAt = Now();
         await db.SaveChangesAsync(ct);
+        if (!string.IsNullOrWhiteSpace(req.FcrCode))
+            await ArchiveRequestAsync(req, ct);
         return await GetAsync(id, ct);
     }
 
@@ -246,6 +253,8 @@ public sealed class RequestService(FcrDbContext db, AttachmentStore store, IFcrR
             FcrCode = req.FcrCode.Length > 0 ? req.FcrCode : null,
             Category = req.Category.Length > 0 ? req.Category : null,
             Originator = req.Requester?.Username,
+            ActionParty = req.Contractor,
+            Remarks = req.Subcontractor,
             Date = DateTime.Now.ToString("yyyy-MM-dd"),
         }, ct);
         req.LinkedFcrId = rec.Id;
@@ -253,7 +262,26 @@ public sealed class RequestService(FcrDbContext db, AttachmentStore store, IFcrR
             req.SubmissionStatus = RequestStatuses.UnderAdminReview;
         req.UpdatedAt = Now();
         await db.SaveChangesAsync(ct);
+        if (!string.IsNullOrWhiteSpace(req.FcrCode))
+            await ArchiveRequestAsync(req, ct);
         return await GetAsync(id, ct);
+    }
+
+    private async Task<string> ArchiveRequestAsync(FcrRequest req, CancellationToken ct)
+    {
+        var requester = await db.Users.AsNoTracking()
+            .Where(u => u.Id == req.RequesterUserId)
+            .Select(u => u.Username).FirstOrDefaultAsync(ct) ?? "";
+        var attachments = await db.FcrAttachments
+            .Where(a => a.FcrRequestId == req.Id).ToListAsync(ct);
+        var path = await archiveService.ArchiveAsync(req, requester, attachments, ct);
+        if (req.LinkedFcrId.HasValue)
+        {
+            var record = await db.Fcrs.FindAsync([req.LinkedFcrId.Value], ct);
+            if (record is not null) record.ArchLoc = path;
+        }
+        await db.SaveChangesAsync(ct);
+        return path;
     }
 
     public async Task<RequestDetailDto?> PrepareWorkflowAsync(
@@ -703,6 +731,7 @@ public sealed class RequestService(FcrDbContext db, AttachmentStore store, IFcrR
             r.Id, r.RequestNumber, r.RequesterUserId, r.Requester?.Username ?? "",
             r.Subject, r.Justification, r.Description, r.SubmissionStatus,
             r.SubmittedAt, r.CreatedAt, r.UpdatedAt, r.LinkedFcrId, r.FcrCode, r.Category,
+            r.Contractor, r.Subcontractor,
             r.Comments.OrderBy(c => c.CreatedAt).Select(c => new CommentDto(
                 c.Id, c.UserId, c.User?.Username ?? "", c.CommentText, c.CommentType, c.CreatedAt)).ToList(),
             r.Attachments.OrderBy(a => a.UploadedAt).Select(a => new AttachmentDto(
