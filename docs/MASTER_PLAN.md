@@ -18,7 +18,7 @@ Users enter ERMS, select FCR from the dashboard/navigation, and use FCR without 
 - **Authorization:** ERMS Admin controls whether a user may access the FCR module. FCR additionally enforces FCR-specific roles and permissions server-side.
 - **Roles:** FCR Admin and FCR User, with the FCR Admin role including the project owner/admin as configured. Do not rely on UI hiding as authorization.
 - **UI:** ERMS Admin integrates FCR screens into the ERMS UI template. FCR should provide module functionality/API and integration guidance; standalone UI is not the primary target.
-- **Framework compatibility:** Target .NET 8 compatibility for integration. The existing repository may currently target a newer framework; verify and align before host integration.
+- **Framework compatibility:** The FCR .NET solution targets .NET 8 and the CI build/test workflow is green.
 - **Data:** Preserve existing FCR records and database history. Any schema conversion/migration must be backed up, tested, and reversible.
 - **Files:** FCR-number-based archive folders and attachment storage must be implemented against the actual ERMS/server storage configuration, with path validation and access controls.
 
@@ -128,14 +128,14 @@ Users enter ERMS, select FCR from the dashboard/navigation, and use FCR without 
 
 ## 5. Current known status (based on prior repository work; verify against current branch/CI before relying on it)
 
-- Phase 7 audit/reporting implementation and related migration/tests were previously added.
-- A security/UAT checklist and anonymous-access regression test were previously proposed in an open PR.
-- Some security, UAT, report accuracy, and audit-retention acceptance items remain unconfirmed.
-- Phase 1 has retargeted the .NET solution and CI to .NET 8 and added the hostable `FCR.Module` entry points. PR #5 CI (build + tests) passed; it is ready for review but not yet merged.
-- Phase 2 implementation is in PR #7: external ERMS subject mapping, FCR User role, and server-side module access policy; .NET 8 CI passed. Actual ERMS host claim configuration and end-to-end integration still require ERMS-side verification.
-- FCR module registration/endpoint mapping exists, but actual ERMS host integration and ERMS-side access gate/UI template are not verified.
-- ERMS identity/role mapping is being implemented in Phase 2; end-to-end host verification remains required.
-- Configurable sequential workflow and server archive integration are not considered complete until demonstrated in the actual host.
+- **Phase 1 complete and merged:** .NET 8 compatibility and the in-process `FCR.Module` registration/mapping foundation are on main (PR #5).
+- **Phase 2 complete in FCR code and merged:** external ERMS subject mapping, FCR User/Admin roles, server-side module authorization, and FCR Admin identity mapping endpoints are on main (merged with the Phase 5 integration PR). Actual ERMS claim name/configuration and end-to-end host integration still need ERMS-side verification.
+- **Phase 3 core already exists:** submitter creates a request with Subject/Justification/Description, tracks own requests, and uploads attachments. This follow-up adds the explicit `title` alias for the ERMS UI while preserving `subject` compatibility.
+- **Phase 4 workflow implementation exists:** configurable workflow definitions, sequential/parallel review mode, reviewer/approver assignment, decisions, and history are implemented/tested in the .NET module. Exact business behavior and UAT signoff remain pending.
+- **Phase 5 complete in FCR code and merged:** FCR Admin metadata (number/category/contractor/subcontractor), numbered folder archive, request JSON/HTML manifests, attachment copies, retry behavior, and linked `arch_loc` are implemented (PR #14).
+- **Phase 6 host integration remains external:** the ERMS project/UI template is not in this repository. ERMS Admin owns the navigation/screen template; the module registration and API integration contract are documented.
+- Phase 7 audit/report endpoints and security tests exist, but security/UAT, report accuracy signoff, and audit-retention policy remain open.
+- Phase 8 production data migration, rollback rehearsal, and cutover are not started and require explicit approval.
 
 ## 6. Decisions and assumptions
 
