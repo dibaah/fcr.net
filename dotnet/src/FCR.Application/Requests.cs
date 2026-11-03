@@ -1,17 +1,26 @@
 namespace FCR.Application;
 
-public record CreateRequestInput(string Subject, string Justification, string Description);
+public record CreateRequestInput(string Subject, string Justification, string Description,
+    string? Title = null);
 public record RequestListItemDto(
     string Id, string RequestNumber, long RequesterUserId, string RequesterUsername,
     string Subject, string SubmissionStatus, string? SubmittedAt, string CreatedAt,
     string UpdatedAt, long? LinkedFcrId, string FcrCode, string Category,
-    int AttachmentCount, int CommentCount);
+    int AttachmentCount, int CommentCount)
+{
+    /// <summary>ERMS-facing alias for the legacy Subject field.</summary>
+    public string Title => Subject;
+}
 public record RequestDetailDto(
     string Id, string RequestNumber, long RequesterUserId, string RequesterUsername,
     string Subject, string Justification, string Description, string SubmissionStatus,
     string? SubmittedAt, string CreatedAt, string UpdatedAt, long? LinkedFcrId,
     string FcrCode, string Category, string Contractor, string Subcontractor,
-    bool IsArchived, string? ArchivedAt, List<CommentDto> Comments, List<AttachmentDto> Attachments, WorkflowDto? Workflow);
+    bool IsArchived, string? ArchivedAt, List<CommentDto> Comments, List<AttachmentDto> Attachments, WorkflowDto? Workflow)
+{
+    /// <summary>ERMS-facing alias for the legacy Subject field.</summary>
+    public string Title => Subject;
+}
 public record CommentDto(long Id, long UserId, string Username, string CommentText,
     string CommentType, string CreatedAt);
 public record CommentInput(string CommentText);
