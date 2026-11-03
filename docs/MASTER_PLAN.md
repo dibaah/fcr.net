@@ -132,7 +132,7 @@ Users enter ERMS, select FCR from the dashboard/navigation, and use FCR without 
 - A security/UAT checklist and anonymous-access regression test were previously proposed in an open PR.
 - Some security, UAT, report accuracy, and audit-retention acceptance items remain unconfirmed.
 - Phase 1 has retargeted the .NET solution and CI to .NET 8 and added the hostable `FCR.Module` entry points. PR #5 CI (build + tests) passed; it is ready for review but not yet merged.
-- Phase 2 is implementing ERMS subject-to-FCR-user mapping, FCR User role, and server-side module access policy. The ERMS host source is not in this repository, so actual host claim configuration and end-to-end integration still require ERMS-side verification.
+- Phase 2 implementation is in PR #7: external ERMS subject mapping, FCR User role, and server-side module access policy; .NET 8 CI passed. Actual ERMS host claim configuration and end-to-end integration still require ERMS-side verification.
 - FCR module registration/endpoint mapping exists, but actual ERMS host integration and ERMS-side access gate/UI template are not verified.
 - ERMS identity/role mapping is being implemented in Phase 2; end-to-end host verification remains required.
 - Configurable sequential workflow and server archive integration are not considered complete until demonstrated in the actual host.
