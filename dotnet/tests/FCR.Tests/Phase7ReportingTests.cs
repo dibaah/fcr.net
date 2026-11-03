@@ -56,6 +56,14 @@ public sealed class Phase7ReportingTests : IClassFixture<Phase7ReportingTests.Fi
     }
 
     [Fact]
+    public async Task AdminReports_RejectAnonymousRequests()
+    {
+        using var anonymous = new Fixture().CreateClient();
+        var response = await anonymous.GetAsync("/api/admin/reports/workflow-summary");
+        Assert.Equal(HttpStatusCode.Unauthorized, response.StatusCode);
+    }
+
+    [Fact]
     public async Task MutatingRequest_IsRecordedInAuditActivity()
     {
         var create = await _client.PostAsJsonAsync("/api/requests/",
