@@ -14,7 +14,7 @@ namespace FCR.Infrastructure.Migrations
         protected override void BuildModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
-            modelBuilder.HasAnnotation("ProductVersion", "10.0.14");
+            modelBuilder.HasAnnotation("ProductVersion", "8.0.22");
 
             modelBuilder.Entity("FCR.Domain.Entities.FcrAuditLog", b =>
                 {
