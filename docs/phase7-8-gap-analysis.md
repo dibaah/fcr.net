@@ -10,22 +10,22 @@ Reviewed against `masterplan.md` on the `review-phase7-phase8-completion` branch
 - Existing deployment assets include `dotnet/deploy/deploy.sh`, a systemd unit, and `docs/deployment.md`.
 - Current GitHub Actions workflow runs Python tests and builds the Python EXE; it does not run `dotnet restore/build/test`.
 
-## Phase 7 — not yet accepted as complete
+## Phase 7 — implementation added; acceptance evidence still required
 
 | Master Plan item | Evidence / gap |
 |---|---|
-| Audit logging | Review history is persisted in `fcr_reviews`, but a general `FCRAuditLogs` store for admin/user/system actions is not present. |
-| Workflow reporting | Request status/history APIs exist; dedicated reporting endpoints are not present. |
-| User activity history | No general user activity audit log found. |
-| Pending review reports | Reviewer queue exists at `GET /api/reviews/mine`; admin-wide pending-review reporting remains to be added. |
-| Approval statistics | Existing FCR technical statistics are available; workflow approval metrics are not implemented as dedicated report APIs. |
+| Audit logging | Added `fcr_audit_logs`, EF mapping/migration, and middleware that records mutating API metadata (user, action/path, status, request ID, UTC timestamp). Request bodies/query strings are intentionally excluded. |
+| Workflow reporting | Added admin-only `/api/admin/reports/workflow-summary`, `/approval-statistics`, `/pending-reviews`, `/review-aging`, and `/user-activity` endpoints. |
+| User activity history | Backed by audit log; recent activity can be filtered by user and limited (max 500). |
+| Pending review reports | Added admin report endpoint and static admin report page `static/phase7-reports.html`. |
+| Approval statistics | Added counts by review action and approved/rejected/returned workflow totals. |
 | Dashboard integration | Existing frontend is served; requester/admin/reviewer frontend integration needs explicit end-to-end validation. |
 | Status separation | Request/workflow/FCR technical status are separate in the data model; tests should validate transitions and exports together. |
 | Report/export parity | Existing technical Excel exports exist; workflow reporting/export acceptance remains outstanding. |
 | Security testing | Auth tests exist, but production security acceptance (CSRF, upload content validation, secrets, SSO, threat review) remains outstanding. |
 | UAT | No business acceptance evidence is committed. |
 
-## Phase 8 — production cutover is intentionally blocked
+## Phase 7 validation status\n\nImplementation is now present in the review branch, but Phase 7 is **not accepted as complete until the .NET CI run passes and business/security UAT validates report correctness, permissions, audit retention, and dashboard integration**. The report page is accessible at `/phase7-reports.html`; its APIs enforce the AdminConsole role server-side.\n\n## Phase 8 — production cutover is intentionally blocked
 
 The repo has a Phase 3 deployment script and rollback notes, but that is not proof of production cutover. The Master Plan explicitly requires company IT/business approval and prohibits production deployment without explicit authorization.
 
