@@ -11,7 +11,7 @@ public record RequestDetailDto(
     string Subject, string Justification, string Description, string SubmissionStatus,
     string? SubmittedAt, string CreatedAt, string UpdatedAt, long? LinkedFcrId,
     string FcrCode, string Category, string Contractor, string Subcontractor,
-    List<CommentDto> Comments, List<AttachmentDto> Attachments, WorkflowDto? Workflow);
+    bool IsArchived, string? ArchivedAt, List<CommentDto> Comments, List<AttachmentDto> Attachments, WorkflowDto? Workflow);
 public record CommentDto(long Id, long UserId, string Username, string CommentText,
     string CommentType, string CreatedAt);
 public record CommentInput(string CommentText);
@@ -24,6 +24,8 @@ public record StageDto(string StageName, int StageOrder, string DecisionRule,
 public record ReviewerAssignmentDto(long UserId, string Username, int Order, string Status);
 public record AdminUpdateInput(string? FcrCode, string? Category, long? LinkedFcrId,
     string? Contractor = null, string? Subcontractor = null);
+public record ArchiveInfoDto(string RequestId, string RequestNumber, string FcrCode,
+    string ArchivePath, string FormFileName, string ArchivedAt, int AttachmentCount);
 public record WorkflowPrepInput(string ReviewMode, List<long>? ReviewerUserIds,
     string? DecisionRule, List<long>? ApproverUserIds = null,
     long? WorkflowDefinitionId = null);
@@ -60,6 +62,7 @@ public interface IRequestService
     Task<bool> DeleteAttachmentAsync(string id, long attachmentId, long userId, bool isAdmin, CancellationToken ct = default);
     Task<RequestDetailDto?> AdminUpdateAsync(string id, AdminUpdateInput input, CancellationToken ct = default);
     Task<RequestDetailDto?> CreateLinkedFcrAsync(string id, CancellationToken ct = default);
+    Task<ArchiveInfoDto?> ArchiveAsync(string id, CancellationToken ct = default);
     Task<RequestDetailDto?> PrepareWorkflowAsync(string id, WorkflowPrepInput input, CancellationToken ct = default);
     Task<RequestDetailDto?> SubmitForReviewAsync(string id, CancellationToken ct = default);
 
