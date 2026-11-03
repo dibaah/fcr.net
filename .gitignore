@@ -1,50 +1,26 @@
-# FCR Dashboard - Git ignore rules
-# Generated files only. Batch scripts, the SQLite database, JSON settings,
-# the PyInstaller spec, version_info.txt, static and tests are deliverables
-# and stay tracked.
+# FCR .NET repository ignores
 
-# Python bytecode and packaging metadata
-__pycache__/
-*.py[cod]
-*$py.class
-*.egg-info/
-
-# Virtual environments
-.venv/
-venv/
-env/
-ENV/
-
-# Local secrets / environment overrides
+# Local databases and configuration (never commit runtime/user data)
+fcr_database.db
+settings.json
+*.sqlite
+*.sqlite3
+*.db
 .env
 .env.*
 
-# PyInstaller and archive build output
-build/
-dist/
-*.exe
-*.zip
-FCR_Dashboard.zip
+# .NET build output
+**/bin/
+**/obj/
+.vs/
 
-# Runtime data written beside the executable
-logs/
-backups/
-exports/
-*.log
+# Test and local tooling output
+TestResults/
+coverage/
 
-# Test, coverage and type-check caches
-.pytest_cache/
-.mypy_cache/
-.ruff_cache/
-.coverage
-.coverage.*
-htmlcov/
-
-# Editors
+# Editors and OS metadata
 .vscode/
 .idea/
-
-# Operating system metadata
 .DS_Store
 Thumbs.db
 desktop.ini
