@@ -12,7 +12,7 @@ public sealed class FcrOptions
     public string BackupLocation { get; set; } = "backups";
 
     /// <summary>Settings-only: network root for FCR attachment folders (X:\1-DC equivalent).</summary>
-    public string AttachmentRoot { get; set; } = @"X:\1-DC";
+    public string? AttachmentRoot { get; set; }
     /// <summary>Centralized store for request attachments; default {DataDir}/request-attachments.</summary>
     public string RequestAttachmentDir { get; set; } = "";
 
