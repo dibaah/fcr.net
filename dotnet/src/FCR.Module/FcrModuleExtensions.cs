@@ -1,3 +1,4 @@
+using FCR.Application;
 using FCR.Domain;
 using FCR.Infrastructure;
 using FCR.Infrastructure.Persistence;
@@ -5,6 +6,7 @@ using FCR.Web;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Options;
 
 namespace FCR.Module;
 
@@ -78,6 +80,29 @@ public static class FcrModuleExtensions
         await using var scope = services.CreateAsyncScope();
         var migrator = scope.ServiceProvider.GetRequiredService<DatabaseMigrator>();
         await migrator.MigrateAsync(cancellationToken);
-        await UserSeeder.SeedRolesAsync(scope.ServiceProvider.GetRequiredService<FcrDbContext>());
+        var db = scope.ServiceProvider.GetRequiredService<FcrDbContext>();
+        await UserSeeder.SeedRolesAsync(db);
+
+        // Bootstrap only when explicitly configured and the FCR user table is
+        // empty. This creates the first ERMS-mapped FCR Admin, not a local demo
+        // account. Existing users/roles are never overwritten on later starts.
+        var options = scope.ServiceProvider.GetRequiredService<IOptions<FcrOptions>>().Value;
+        if (!string.IsNullOrWhiteSpace(options.BootstrapAdminExternalId)
+            && !string.IsNullOrWhiteSpace(options.BootstrapAdminUsername))
+        {
+            var userService = scope.ServiceProvider.GetRequiredService<IUserService>();
+            if ((await userService.ListUsersAsync(cancellationToken)).Count == 0)
+            {
+                var username = options.BootstrapAdminUsername.Trim();
+                await userService.CreateExternalUserAsync(new CreateExternalUserRequest(
+                    options.BootstrapAdminExternalId.Trim(),
+                    username,
+                    string.IsNullOrWhiteSpace(options.BootstrapAdminDisplayName)
+                        ? username : options.BootstrapAdminDisplayName.Trim(),
+                    options.BootstrapAdminEmail?.Trim() ?? "",
+                    [RoleNames.FcrAdmin, RoleNames.FcrUser],
+                    IsActive: true), cancellationToken);
+            }
+        }
     }
 }

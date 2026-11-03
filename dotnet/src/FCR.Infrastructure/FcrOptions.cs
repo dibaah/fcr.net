@@ -19,6 +19,12 @@ public sealed class FcrOptions
     /// <summary>Claim carrying the stable ERMS subject key mapped to FCR users.external_id.</summary>
     public string IdentityExternalIdClaim { get; set; } = ClaimTypes.NameIdentifier;
 
+    /// <summary>Optional one-time bootstrap ERMS subject for the first FCR Admin.</summary>
+    public string? BootstrapAdminExternalId { get; set; }
+    public string? BootstrapAdminUsername { get; set; }
+    public string? BootstrapAdminDisplayName { get; set; }
+    public string? BootstrapAdminEmail { get; set; }
+
     public string DbPath => Path.Combine(DataDir, "fcr_database.db");
 
     public string ConnectionString => $"Data Source={DbPath}";
