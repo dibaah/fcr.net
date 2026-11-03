@@ -189,24 +189,67 @@ public class RequestFlowTests(ApiParityTests.Fixture fixture)
     }
 
     [Fact]
-    public async Task Admin_CreateLinkedFcr()
+    public async Task Admin_CreateLinkedFcr_ArchivesFormAndAttachments_Idempotently()
     {
         var admin = await Login("admin", "admin"); Assert.NotNull(admin);
         var requester = await MakeUser(admin, "reqflow4", "Requester");
         var id = await Submit(requester, "Linked FCR test");
+
+        // Official number/category are required before FCR creation and archiving.
+        Assert.Equal(HttpStatusCode.BadRequest,
+            (await admin.PostAsync($"/api/admin/requests/{id}/create-fcr", null)).StatusCode);
+
+        var update = await admin.PutAsJsonAsync($"/api/admin/requests/{id}",
+            new { fcr_code = "FCR-MS-PI-900", category = "Permanent",
+                  contractor = "Main Contractor", subcontractor = "Subcontractor A" });
+        Assert.Equal(HttpStatusCode.OK, update.StatusCode);
+
+        var upload = new MultipartFormDataContent();
+        upload.Add(new ByteArrayContent(System.Text.Encoding.UTF8.GetBytes("archive attachment")),
+            "file", "archive-notes.txt");
+        var attachment = await requester.PostAsync($"/api/requests/{id}/attachments", upload);
+        Assert.Equal(HttpStatusCode.Created, attachment.StatusCode);
 
         var created = await admin.PostAsync($"/api/admin/requests/{id}/create-fcr", null);
         Assert.Equal(HttpStatusCode.OK, created.StatusCode);
         var dto = await Body(created);
         var linkedId = dto.GetProperty("linked_fcr_id").GetInt64();
         Assert.True(linkedId > 0);
+        Assert.True(dto.GetProperty("is_archived").GetBoolean());
+        Assert.False(string.IsNullOrWhiteSpace(dto.GetProperty("archived_at").GetString()));
+        Assert.Equal("Main Contractor", dto.GetProperty("contractor").GetString());
+        Assert.Equal("Subcontractor A", dto.GetProperty("subcontractor").GetString());
 
-        // the linked record exists in the FCR store
+        // The linked record exists in the FCR store.
         var fcr = await Body(await admin.GetAsync($"/api/fcr/{linkedId}"));
         Assert.Equal("Linked FCR test", fcr.GetProperty("fcr_subject").GetString());
 
-        // cannot link twice
+        // Archive endpoint is safe to retry after an interrupted/duplicate admin action.
+        var archive = await admin.PostAsync($"/api/admin/requests/{id}/archive", null);
+        Assert.Equal(HttpStatusCode.OK, archive.StatusCode);
+        var archiveDto = await Body(archive);
+        var archivePath = archiveDto.GetProperty("archive_path").GetString()!;
+        var formPath = Path.Combine(archivePath, archiveDto.GetProperty("form_file_name").GetString()!);
+        Assert.True(File.Exists(formPath));
+        var linkedArchived = await Body(await admin.GetAsync($"/api/fcr/{linkedId}"));
+        Assert.Equal(archivePath, linkedArchived.GetProperty("arch_loc").GetString());
+        var html = await File.ReadAllTextAsync(formPath);
+        Assert.Contains("Linked FCR test", html);
+        Assert.Contains("Main Contractor", html);
+        Assert.Contains("Subcontractor A", html);
+
+        var attachments = Path.Combine(archivePath, "Attachments");
+        var archivedAttachment = Directory.GetFiles(attachments).Single();
+        Assert.Equal("archive attachment", await File.ReadAllTextAsync(archivedAttachment));
+
+        // Archive locks attachments so the archived set cannot silently drift.
+        var attachmentId = (await Body(attachment)).GetProperty("id").GetInt64();
         Assert.Equal(HttpStatusCode.BadRequest,
-            (await admin.PostAsync($"/api/admin/requests/{id}/create-fcr", null)).StatusCode);
+            (await admin.DeleteAsync($"/api/requests/{id}/attachments/{attachmentId}")).StatusCode);
+
+        // Repeated Create FCR does not create another FCR record.
+        var retry = await admin.PostAsync($"/api/admin/requests/{id}/create-fcr", null);
+        Assert.Equal(HttpStatusCode.OK, retry.StatusCode);
+        Assert.Equal(linkedId, (await Body(retry)).GetProperty("linked_fcr_id").GetInt64());
     }
 }

@@ -76,6 +76,19 @@ The module refreshes FCR role claims from the FCR DB on each request and does no
 
 `InitializeFcrModuleAsync()` runs EF migrations and seeds FCR role definitions only; it does not create the standalone development admin. Back up and rehearse migrations on a database copy before production.
 
+
+## FCR Admin archive behavior
+
+When the FCR Admin assigns `fcr_code`, category, contractor, and subcontractor and then creates the linked FCR record, the module archives the request automatically:
+
+- Folder: `<AttachmentRoot>/<area-folder>/<department>/<FCR-code>`.
+- Printable request form: `<FCR-code>_Request.html` at the archive folder root.
+- Attachments: `Attachments/` under the FCR folder; files use stable attachment-ID prefixes to avoid filename collisions.
+- `fcr_requests.archive_path` / `archived_at` record archive metadata, and the linked FCR record's `arch_loc` is updated.
+- `POST /api/admin/requests/{id}/archive` is available for safe retry after a filesystem failure.
+- FCR number/category/contractor/subcontractor and attachments are locked after archiving to prevent the archive from silently diverging from the database.
+
+Configure the host archive root using `Fcr:AttachmentRoot` (prefer a UNC path and grant the ERMS service account read/write access). The standalone app continues to use `settings.json` when no host override is supplied.
 ## Build & test
 
 ```bash

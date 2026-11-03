@@ -20,6 +20,10 @@ public class FcrRequest
     public long? LinkedFcrId { get; set; }
     public string FcrCode { get; set; } = "";
     public string Category { get; set; } = "";
+    public string Contractor { get; set; } = "";
+    public string Subcontractor { get; set; } = "";
+    public string? ArchivePath { get; set; }
+    public string? ArchivedAt { get; set; }
     public User? Requester { get; set; }
     public List<FcrRequestComment> Comments { get; set; } = [];
     public List<FcrAttachment> Attachments { get; set; } = [];

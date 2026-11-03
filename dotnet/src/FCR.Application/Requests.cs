@@ -5,12 +5,14 @@ public record RequestListItemDto(
     string Id, string RequestNumber, long RequesterUserId, string RequesterUsername,
     string Subject, string SubmissionStatus, string? SubmittedAt, string CreatedAt,
     string UpdatedAt, long? LinkedFcrId, string FcrCode, string Category,
+    string Contractor, string Subcontractor, bool IsArchived, string? ArchivedAt,
     int AttachmentCount, int CommentCount);
 public record RequestDetailDto(
     string Id, string RequestNumber, long RequesterUserId, string RequesterUsername,
     string Subject, string Justification, string Description, string SubmissionStatus,
     string? SubmittedAt, string CreatedAt, string UpdatedAt, long? LinkedFcrId,
-    string FcrCode, string Category,
+    string FcrCode, string Category, string Contractor, string Subcontractor,
+    bool IsArchived, string? ArchivedAt,
     List<CommentDto> Comments, List<AttachmentDto> Attachments, WorkflowDto? Workflow);
 public record CommentDto(long Id, long UserId, string Username, string CommentText,
     string CommentType, string CreatedAt);
@@ -22,7 +24,10 @@ public record WorkflowDto(long Id, string WorkflowStatus, string ReviewMode,
 public record StageDto(string StageName, int StageOrder, string DecisionRule,
     string StageStatus, List<ReviewerAssignmentDto> Reviewers);
 public record ReviewerAssignmentDto(long UserId, string Username, int Order, string Status);
-public record AdminUpdateInput(string? FcrCode, string? Category, long? LinkedFcrId);
+public record AdminUpdateInput(string? FcrCode, string? Category, long? LinkedFcrId,
+    string? Contractor = null, string? Subcontractor = null);
+public record ArchiveInfoDto(string RequestId, string RequestNumber, string FcrCode,
+    string ArchivePath, string FormFileName, string ArchivedAt, int AttachmentCount);
 public record WorkflowPrepInput(string ReviewMode, List<long>? ReviewerUserIds,
     string? DecisionRule, List<long>? ApproverUserIds = null,
     long? WorkflowDefinitionId = null);
@@ -59,6 +64,7 @@ public interface IRequestService
     Task<bool> DeleteAttachmentAsync(string id, long attachmentId, long userId, bool isAdmin, CancellationToken ct = default);
     Task<RequestDetailDto?> AdminUpdateAsync(string id, AdminUpdateInput input, CancellationToken ct = default);
     Task<RequestDetailDto?> CreateLinkedFcrAsync(string id, CancellationToken ct = default);
+    Task<ArchiveInfoDto?> ArchiveAsync(string id, CancellationToken ct = default);
     Task<RequestDetailDto?> PrepareWorkflowAsync(string id, WorkflowPrepInput input, CancellationToken ct = default);
     Task<RequestDetailDto?> SubmitForReviewAsync(string id, CancellationToken ct = default);
 

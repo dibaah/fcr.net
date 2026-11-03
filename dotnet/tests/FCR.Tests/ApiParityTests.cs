@@ -44,6 +44,7 @@ public class ApiParityTests : IClassFixture<ApiParityTests.Fixture>, IAsyncLifet
                 {
                     ["FCR_DATA_DIR"] = DataDir,
                     ["FCR_STATIC_DIR"] = RepoStaticDir,
+                    ["Fcr:AttachmentRoot"] = Path.Combine(DataDir, "archive"),
                 }));
     }
 

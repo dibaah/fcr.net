@@ -138,6 +138,10 @@ public sealed class FcrDbContext(DbContextOptions<FcrDbContext> options) : DbCon
             e.Property(r => r.LinkedFcrId).HasColumnName("linked_fcr_id");
             e.Property(r => r.FcrCode).HasColumnName("fcr_code");
             e.Property(r => r.Category).HasColumnName("category");
+            e.Property(r => r.Contractor).HasColumnName("contractor");
+            e.Property(r => r.Subcontractor).HasColumnName("subcontractor");
+            e.Property(r => r.ArchivePath).HasColumnName("archive_path").IsRequired(false);
+            e.Property(r => r.ArchivedAt).HasColumnName("archived_at").IsRequired(false);
             e.HasIndex(r => r.RequestNumber).IsUnique().HasDatabaseName("idx_requests_number");
             e.HasIndex(r => r.SubmissionStatus).HasDatabaseName("idx_requests_status");
             e.HasIndex(r => r.RequesterUserId).HasDatabaseName("idx_requests_requester");

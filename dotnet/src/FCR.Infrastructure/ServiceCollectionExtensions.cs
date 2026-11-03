@@ -1,4 +1,5 @@
 using FCR.Application;
+using FCR.Infrastructure.Archive;
 using FCR.Infrastructure.Backup;
 using FCR.Infrastructure.Excel;
 using FCR.Infrastructure.Folders;
@@ -39,6 +40,7 @@ public static class ServiceCollectionExtensions
         services.AddScoped<IFcrRepository, FcrRepository>();
         services.AddScoped<IUserService, UserService>();
         services.AddSingleton<Attachments.AttachmentStore>();
+        services.AddScoped<FcrArchiveService>();
         services.AddScoped<IRequestService, RequestService>();
         services.AddSingleton<ISettingsStore, JsonSettingsStore>();
         services.AddSingleton<FcrBackupService>();
