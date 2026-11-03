@@ -20,7 +20,7 @@ public sealed class RequestService(FcrDbContext db, AttachmentStore store, IFcrR
     public async Task<RequestDetailDto> CreateAsync(
         long requesterUserId, CreateRequestInput input, CancellationToken ct = default)
     {
-        var subject = (input.Subject ?? "").Trim();
+        var subject = (input.Title ?? input.Subject ?? "").Trim();
         var justification = (input.Justification ?? "").Trim();
         var description = (input.Description ?? "").Trim();
         if (subject.Length == 0) throw new FcrValidationException("Subject required");
