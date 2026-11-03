@@ -3,6 +3,7 @@ using System.Text.Json;
 using FCR.Application;
 using FCR.Domain;
 using FCR.Infrastructure;
+using FCR.Module;
 using FCR.Infrastructure.Persistence;
 using FCR.Web;
 using Microsoft.AspNetCore.Authentication;
@@ -23,7 +24,6 @@ builder.WebHost.ConfigureKestrel(kestrel =>
             listen => listen.UseHttps(certPath, builder.Configuration["Fcr:HttpsCertPassword"]));
 });
 
-builder.Services.AddHealthChecks().AddCheck<DbHealthCheck>("fcr_db");
 builder.Services.AddHttpLogging(logging => logging.LoggingFields =
     Microsoft.AspNetCore.HttpLogging.HttpLoggingFields.RequestPropertiesAndHeaders
     | Microsoft.AspNetCore.HttpLogging.HttpLoggingFields.ResponseStatusCode);
@@ -79,20 +79,7 @@ builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationSc
                 CookieAuthenticationDefaults.AuthenticationScheme)));
         };
     });
-builder.Services.AddAuthorization(o =>
-{
-    foreach (var role in RoleNames.All)
-        o.AddPolicy(role, p => p.RequireRole(role));
-    o.AddPolicy(PolicyNames.AdminConsole,
-        p => p.RequireRole(RoleNames.FcrAdmin, RoleNames.SystemAdministrator));
-    o.AddPolicy(PolicyNames.RequesterAccess,
-        p => p.RequireRole(RoleNames.Requester, RoleNames.SystemAdministrator));
-    o.AddPolicy(PolicyNames.ReviewerAccess,
-        p => p.RequireRole(RoleNames.Reviewer, RoleNames.Approver,
-            RoleNames.SystemAdministrator));
-});
-
-builder.Services.AddFcrInfrastructure(builder.Configuration);
+builder.Services.AddFcrModule(builder.Configuration);
 
 var app = builder.Build();
 
@@ -132,17 +119,12 @@ if (app.Configuration.GetValue("Fcr:BehindProxy", false))
     });
 
 app.UseHttpLogging();
-app.UseMiddleware<Phase7AuditMiddleware>();
 app.UseAuthentication();
+app.UseFcrModule();
 app.UseAuthorization();
 
-app.MapHealthChecks("/health/live");
-app.MapHealthChecks("/health/ready");
-
-app.MapApi();
-app.MapAuthApi();
-app.MapRequestApi();
-app.MapPhase7Reports();
+app.MapAuthApi(); // standalone development login; ERMS hosts do not map this endpoint.
+app.MapFcrModule();
 
 await app.RunAsync();
 
