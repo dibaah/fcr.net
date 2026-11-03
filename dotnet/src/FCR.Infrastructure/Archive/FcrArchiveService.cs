@@ -4,6 +4,7 @@ using FCR.Application;
 using FCR.Domain;
 using FCR.Infrastructure.Attachments;
 using FCR.Infrastructure.Folders;
+using FCR.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
 
 namespace FCR.Infrastructure.Archive;
