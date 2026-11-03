@@ -29,6 +29,10 @@ public static class ServiceCollectionExtensions
             o.RequestAttachmentDir = config["Fcr:RequestAttachmentDir"] ?? o.RequestAttachmentDir;
             o.IdentityExternalIdClaim = config["Fcr:Identity:ExternalIdClaim"]
                 ?? o.IdentityExternalIdClaim;
+            o.BootstrapAdminExternalId = config["Fcr:BootstrapAdmin:ExternalId"];
+            o.BootstrapAdminUsername = config["Fcr:BootstrapAdmin:Username"];
+            o.BootstrapAdminDisplayName = config["Fcr:BootstrapAdmin:DisplayName"];
+            o.BootstrapAdminEmail = config["Fcr:BootstrapAdmin:Email"];
         });
         services.AddDbContext<FcrDbContext>((sp, b) =>
         {
