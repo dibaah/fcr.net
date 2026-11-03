@@ -131,6 +131,17 @@ public static class RequestEndpoints
             catch (FcrDuplicateCodeException ex) { return Detail(409, ex.Message); }
         });
 
+        admin.MapPost("/{id}/archive", async Task<IResult> (
+            string id, IRequestService svc) =>
+        {
+            try
+            {
+                var archive = await svc.ArchiveAsync(id);
+                return archive is null ? Detail(404, "Request not found") : Results.Ok(archive);
+            }
+            catch (FcrValidationException ex) { return Detail(400, ex.Message); }
+        });
+
         admin.MapPut("/{id}/workflow", async Task<IResult> (
             string id, WorkflowPrepInput input, IRequestService svc) =>
         {
