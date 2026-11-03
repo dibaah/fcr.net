@@ -71,6 +71,8 @@ public static class DecisionRules
 /// <summary>Authorization policy names combining roles.</summary>
 public static class PolicyNames
 {
+    /// <summary>FCR User, FCR Admin, or an FCR workflow role — module access.</summary>
+    public const string FcrModuleAccess = "FcrModuleAccess";
     /// <summary>FCR Admin or System Administrator — admin console access.</summary>
     public const string AdminConsole = "AdminConsole";
     /// <summary>Requester or System Administrator — may submit requests.</summary>
