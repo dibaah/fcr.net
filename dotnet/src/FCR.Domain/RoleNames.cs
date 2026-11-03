@@ -6,6 +6,7 @@ namespace FCR.Domain;
 /// </summary>
 public static class RoleNames
 {
+    public const string FcrUser = "FCR User";
     public const string Requester = "Requester";
     public const string FcrAdmin = "FCR Admin";
     public const string Reviewer = "Reviewer";
@@ -14,6 +15,6 @@ public static class RoleNames
 
     public static readonly string[] All =
     [
-        Requester, FcrAdmin, Reviewer, Approver, SystemAdministrator,
+        FcrUser, Requester, FcrAdmin, Reviewer, Approver, SystemAdministrator,
     ];
 }
