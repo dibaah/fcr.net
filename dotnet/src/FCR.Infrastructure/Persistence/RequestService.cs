@@ -145,6 +145,8 @@ public sealed class RequestService(FcrDbContext db, AttachmentStore store, IFcrR
     {
         var req = await db.FcrRequests.FindAsync([id], ct);
         if (req is null) throw new FcrNotFoundException(0);
+        if (!string.IsNullOrWhiteSpace(req.ArchivePath))
+            throw new FcrValidationException("Attachments cannot be changed after the request is archived");
         if (req.SubmissionStatus is RequestStatuses.UnderReview
             or RequestStatuses.Approved or RequestStatuses.Rejected
             or RequestStatuses.Completed)
@@ -188,6 +190,8 @@ public sealed class RequestService(FcrDbContext db, AttachmentStore store, IFcrR
     public async Task<bool> DeleteAttachmentAsync(
         string id, long attachmentId, long userId, bool isAdmin, CancellationToken ct = default)
     {
+        if (await db.FcrRequests.AnyAsync(r => r.Id == id && r.ArchivePath != null, ct))
+            throw new FcrValidationException("Attachments cannot be changed after the request is archived");
         var a = await db.FcrAttachments
             .FirstOrDefaultAsync(x => x.Id == attachmentId && x.FcrRequestId == id, ct);
         if (a is null) return false;
@@ -214,12 +218,21 @@ public sealed class RequestService(FcrDbContext db, AttachmentStore store, IFcrR
         var req = await db.FcrRequests.FindAsync([id], ct);
         if (req is null) return null;
 
+        if (!string.IsNullOrWhiteSpace(req.ArchivePath)
+            && ((input.FcrCode is not null && !string.Equals(req.FcrCode, FcrCode.Validate(input.FcrCode), StringComparison.OrdinalIgnoreCase))
+                || (input.Category is not null && input.Category.Trim() != req.Category)
+                || (input.Contractor is not null && input.Contractor.Trim() != req.Contractor)
+                || (input.Subcontractor is not null && input.Subcontractor.Trim() != req.Subcontractor)))
+            throw new FcrValidationException("FCR code/category/contractor metadata cannot be changed after archiving");
+
         if (input.FcrCode is not null)
         {
             var code = FcrCode.Validate(input.FcrCode);
             if (code.Length > 0 && await db.Fcrs.AnyAsync(f => f.FcrCode == code, ct)
                 && db.Fcrs.Any(f => f.FcrCode == code && f.Id != input.LinkedFcrId && f.Id != req.LinkedFcrId))
                 throw new FcrValidationException($"FCR Code '{code}' already exists");
+            if (code.Length > 0 && string.IsNullOrWhiteSpace(input.Category ?? req.Category))
+                throw new FcrValidationException("Assign an FCR category before archiving");
             req.FcrCode = code;
         }
         if (input.Category is not null) req.Category = input.Category.Trim();
@@ -275,6 +288,9 @@ public sealed class RequestService(FcrDbContext db, AttachmentStore store, IFcrR
         var attachments = await db.FcrAttachments
             .Where(a => a.FcrRequestId == req.Id).ToListAsync(ct);
         var path = await archiveService.ArchiveAsync(req, requester, attachments, ct);
+        req.ArchivePath = path;
+        req.ArchivedAt = Now();
+        req.UpdatedAt = req.ArchivedAt;
         if (req.LinkedFcrId.HasValue)
         {
             var record = await db.Fcrs.FindAsync([req.LinkedFcrId.Value], ct);
@@ -282,6 +298,21 @@ public sealed class RequestService(FcrDbContext db, AttachmentStore store, IFcrR
         }
         await db.SaveChangesAsync(ct);
         return path;
+    }
+
+    public async Task<ArchiveInfoDto?> ArchiveAsync(string id, CancellationToken ct = default)
+    {
+        var req = await db.FcrRequests.Include(r => r.Requester)
+            .FirstOrDefaultAsync(r => r.Id == id, ct);
+        if (req is null) return null;
+        if (string.IsNullOrWhiteSpace(req.FcrCode))
+            throw new FcrValidationException("Assign an FCR Code before archiving");
+        if (string.IsNullOrWhiteSpace(req.Category))
+            throw new FcrValidationException("Assign an FCR category before archiving");
+        var path = await ArchiveRequestAsync(req, ct);
+        var count = await db.FcrAttachments.CountAsync(a => a.FcrRequestId == id, ct);
+        return new ArchiveInfoDto(req.Id, req.RequestNumber, req.FcrCode, path,
+            $"{req.FcrCode}-request.html", req.ArchivedAt ?? Now(), count);
     }
 
     public async Task<RequestDetailDto?> PrepareWorkflowAsync(
@@ -731,7 +762,7 @@ public sealed class RequestService(FcrDbContext db, AttachmentStore store, IFcrR
             r.Id, r.RequestNumber, r.RequesterUserId, r.Requester?.Username ?? "",
             r.Subject, r.Justification, r.Description, r.SubmissionStatus,
             r.SubmittedAt, r.CreatedAt, r.UpdatedAt, r.LinkedFcrId, r.FcrCode, r.Category,
-            r.Contractor, r.Subcontractor,
+            r.Contractor, r.Subcontractor, r.ArchivePath is not null, r.ArchivedAt,
             r.Comments.OrderBy(c => c.CreatedAt).Select(c => new CommentDto(
                 c.Id, c.UserId, c.User?.Username ?? "", c.CommentText, c.CommentType, c.CreatedAt)).ToList(),
             r.Attachments.OrderBy(a => a.UploadedAt).Select(a => new AttachmentDto(
