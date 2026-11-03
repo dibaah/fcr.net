@@ -39,6 +39,43 @@ public sealed class UserService(FcrDbContext db) : IUserService
         db.Users.Include(u => u.UserRoles).ThenInclude(ur => ur.Role)
             .Where(u => u.Id == id).Select(u => ToDto(u)).FirstOrDefaultAsync(ct);
 
+    public Task<UserDto?> GetUserByExternalIdAsync(string externalId, CancellationToken ct = default) =>
+        db.Users.Include(u => u.UserRoles).ThenInclude(ur => ur.Role)
+            .Where(u => u.ExternalId == externalId)
+            .Select(u => ToDto(u)).FirstOrDefaultAsync(ct);
+
+    public async Task<UserDto> CreateExternalUserAsync(
+        CreateExternalUserRequest req, CancellationToken ct = default)
+    {
+        var externalId = (req.ExternalId ?? "").Trim();
+        var username = (req.Username ?? "").Trim();
+        if (externalId.Length == 0) throw new FcrValidationException("External identity required");
+        if (username.Length == 0) throw new FcrValidationException("Username required");
+        if (await db.Users.AnyAsync(u => u.ExternalId == externalId, ct))
+            throw new FcrValidationException("External identity is already mapped");
+        if (await db.Users.AnyAsync(u => u.Username == username, ct))
+            throw new FcrValidationException($"Username '{username}' already exists");
+
+        var user = new User
+        {
+            ExternalId = externalId,
+            Username = username,
+            DisplayName = req.DisplayName?.Trim() ?? "",
+            Email = req.Email?.Trim() ?? "",
+            // External users authenticate through ERMS; this value is intentionally
+            // not a valid local password hash and cannot be used for local login.
+            PasswordHash = "!external-id-only!",
+            IsActive = req.IsActive,
+            CreatedAt = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss"),
+            UpdatedAt = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss"),
+        };
+        db.Users.Add(user);
+        await db.SaveChangesAsync(ct);
+        await AssignRolesAsync(user, req.Roles, ct);
+        await db.SaveChangesAsync(ct);
+        return (await GetUserAsync(user.Id, ct))!;
+    }
+
     public async Task<UserDto> CreateUserAsync(CreateUserRequest req, CancellationToken ct = default)
     {
         var username = (req.Username ?? "").Trim();
@@ -102,6 +139,6 @@ public sealed class UserService(FcrDbContext db) : IUserService
     }
 
     private static UserDto ToDto(User u) => new(
-        u.Id, u.Username, u.DisplayName, u.Email, u.IsActive,
+        u.Id, u.Username, u.DisplayName, u.Email, u.ExternalId, u.IsActive,
         u.UserRoles.Where(ur => ur.Role is not null).Select(ur => ur.Role!.Name).ToList());
 }
