@@ -2,15 +2,12 @@
 using FCR.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
-using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
 
 namespace FCR.Infrastructure.Migrations
 {
-    [DbContext(typeof(FcrDbContext))]
-    [Migration("20261103193000_AddExternalIdentityMapping")]
     partial class AddExternalIdentityMapping
     {
         protected override void BuildTargetModel(ModelBuilder modelBuilder)

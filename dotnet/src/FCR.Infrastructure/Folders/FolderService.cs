@@ -1,5 +1,6 @@
 using FCR.Application;
 using FCR.Domain;
+using Microsoft.Extensions.Options;
 
 namespace FCR.Infrastructure.Folders;
 
@@ -7,9 +8,11 @@ namespace FCR.Infrastructure.Folders;
 /// Folder resolution — parity with fcr_code.py's generate_folder_path /
 /// find_existing_folder. Directory checks hit the configured attachment_root.
 /// </summary>
-public sealed class FolderService(ISettingsStore settings) : IFolderService
+public sealed class FolderService(ISettingsStore settings, IOptions<FcrOptions> options) : IFolderService
 {
-    public string AttachmentRoot => settings.Load().AttachmentRoot;
+    public string AttachmentRoot => string.IsNullOrWhiteSpace(options.Value.AttachmentRoot)
+        ? settings.Load().AttachmentRoot
+        : options.Value.AttachmentRoot;
 
     public string GenerateFolderPath(string? fcrCode) =>
         FcrCode.GenerateFolderPath(AttachmentRoot, fcrCode);
