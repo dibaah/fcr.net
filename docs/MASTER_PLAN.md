@@ -129,12 +129,12 @@ Users enter ERMS, select FCR from the dashboard/navigation, and use FCR without 
 ## 5. Current known status (based on prior repository work; verify against current branch/CI before relying on it)
 
 - **Phase 1 complete and merged:** .NET 8 compatibility and the in-process `FCR.Module` registration/mapping foundation are on main (PR #5).
-- **Phase 2 complete in FCR code and merged:** external ERMS subject mapping, FCR User/Admin roles, server-side module authorization, and FCR Admin identity mapping endpoints are on main (merged with the Phase 5 integration PR). Actual ERMS claim name/configuration and end-to-end host integration still need ERMS-side verification.
+- **Phase 2 complete in FCR code and merged:** external ERMS subject mapping, FCR User/Admin roles, server-side module authorization, and FCR Admin identity mapping endpoints are on main (merged with the Phase 5 integration PR). A fake ERMS-host integration test now validates the in-process middleware/identity/authorization pipeline; actual ERMS claim name/configuration and host-specific UI/access gate still need ERMS-side verification.
 - **Phase 3 core already exists:** submitter creates a request with Subject/Justification/Description, tracks own requests, and uploads attachments. This follow-up adds the explicit `title` alias for the ERMS UI while preserving `subject` compatibility.
 - **Phase 4 workflow implementation exists:** configurable workflow definitions, sequential/parallel review mode, reviewer/approver assignment, decisions, and history are implemented/tested in the .NET module. Exact business behavior and UAT signoff remain pending.
 - **Phase 5 complete in FCR code and merged:** FCR Admin metadata (number/category/contractor/subcontractor), numbered folder archive, request JSON/HTML manifests, attachment copies, retry behavior, and linked `arch_loc` are implemented (PR #14).
 - **Phase 6 host integration remains external:** the ERMS project/UI template is not in this repository. ERMS Admin owns the navigation/screen template; the module registration and API integration contract are documented.
-- Phase 7 audit/report endpoints and security tests exist, but security/UAT, report accuracy signoff, and audit-retention policy remain open.
+- Phase 7 audit/report endpoints and automated anonymous 401 + authenticated non-admin 403 report-access regression tests are merged. Attachment upload path/size cleanup tests are also in the security suite. Business UAT, report accuracy signoff, and audit-retention policy remain open.
 - Phase 8 production data migration, rollback rehearsal, and cutover are not started and require explicit approval.
 
 ## 6. Decisions and assumptions
