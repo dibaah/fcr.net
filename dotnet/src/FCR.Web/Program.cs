@@ -131,6 +131,7 @@ if (app.Configuration.GetValue("Fcr:BehindProxy", false))
     });
 
 app.UseHttpLogging();
+app.UseMiddleware<Phase7AuditMiddleware>();
 app.UseAuthentication();
 app.UseAuthorization();
 
@@ -140,6 +141,7 @@ app.MapHealthChecks("/health/ready");
 app.MapApi();
 app.MapAuthApi();
 app.MapRequestApi();
+app.MapPhase7Reports();
 
 await app.RunAsync();
 
