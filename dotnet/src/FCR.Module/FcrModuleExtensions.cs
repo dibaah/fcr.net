@@ -1,6 +1,7 @@
 using FCR.Domain;
 using FCR.Infrastructure;
 using FCR.Infrastructure.Persistence;
+using FCR.Web;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
