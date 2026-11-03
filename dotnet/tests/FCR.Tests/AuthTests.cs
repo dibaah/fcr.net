@@ -160,6 +160,45 @@ public class AuthTests(ApiParityTests.Fixture fixture)
     }
 
     [Fact]
+    public async Task FcrUserCanAccessModule_FcrAdminCanManageMappings_EmptyRoleUserDenied()
+    {
+        var admin = await Login("admin", "admin");
+        Assert.NotNull(admin);
+
+        await admin.PostAsJsonAsync("/api/admin/users", new Dictionary<string, object?>
+        {
+            ["username"] = "fcruser", ["password"] = "pass1234",
+            ["roles"] = new[] { "FCR User" },
+        });
+        await admin.PostAsJsonAsync("/api/admin/users", new Dictionary<string, object?>
+        {
+            ["username"] = "fcradmin", ["password"] = "pass1234",
+            ["roles"] = new[] { "FCR Admin" },
+        });
+        await admin.PostAsJsonAsync("/api/admin/users", new Dictionary<string, object?>
+        {
+            ["username"] = "norole", ["password"] = "pass1234",
+        });
+
+        var fcrUser = await Login("fcruser", "pass1234");
+        Assert.NotNull(fcrUser);
+        Assert.Equal(HttpStatusCode.OK, (await fcrUser.GetAsync("/api/fcr")).StatusCode);
+        Assert.Equal(HttpStatusCode.Forbidden,
+            (await fcrUser.GetAsync("/api/admin/fcr-users")).StatusCode);
+
+        var fcrAdmin = await Login("fcradmin", "pass1234");
+        Assert.NotNull(fcrAdmin);
+        Assert.Equal(HttpStatusCode.OK,
+            (await fcrAdmin.GetAsync("/api/admin/fcr-users")).StatusCode);
+        Assert.Equal(HttpStatusCode.Forbidden,
+            (await fcrAdmin.GetAsync("/api/admin/users")).StatusCode);
+
+        var noRole = await Login("norole", "pass1234");
+        Assert.NotNull(noRole);
+        Assert.Equal(HttpStatusCode.Forbidden, (await noRole.GetAsync("/api/fcr")).StatusCode);
+    }
+
+    [Fact]
     public async Task RoleChange_TakesEffectImmediately()
     {
         var admin = await Login("admin", "admin");
