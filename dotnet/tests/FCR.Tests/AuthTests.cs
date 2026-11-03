@@ -72,7 +72,8 @@ public class AuthTests(ApiParityTests.Fixture fixture)
 
         var roles = (await Body(await admin.GetAsync("/api/admin/roles"))).EnumerateArray()
             .Select(r => r.GetProperty("name").GetString()).ToList();
-        Assert.Equal(5, roles.Count);
+        Assert.Equal(6, roles.Count);
+        Assert.Contains("FCR User", roles);
         Assert.Contains("Requester", roles);
         Assert.Contains("FCR Admin", roles);
         Assert.Contains("Reviewer", roles);
@@ -101,6 +102,38 @@ public class AuthTests(ApiParityTests.Fixture fixture)
             new Dictionary<string, object?>
             { ["username"] = "nobody2", ["password"] = "x", ["roles"] = new[] { "Superuser" } });
         Assert.Equal(HttpStatusCode.BadRequest, badRole.StatusCode);
+    }
+
+    [Fact]
+    public async Task FcrAdmin_CanMapErmsIdentityAndAssignFcrRoles()
+    {
+        var admin = await Login("admin", "admin");
+        Assert.NotNull(admin);
+
+        var create = await admin.PostAsJsonAsync("/api/admin/fcr-users",
+            new Dictionary<string, object?>
+            {
+                ["external_id"] = "erms-subject-001",
+                ["username"] = "erms.user1",
+                ["display_name"] = "ERMS User One",
+                ["email"] = "erms.user1@example.invalid",
+                ["roles"] = new[] { "FCR User", "Requester" },
+                ["is_active"] = true,
+            });
+        Assert.Equal(HttpStatusCode.Created, create.StatusCode);
+        var user = await Body(create);
+        var id = user.GetProperty("id").GetInt64();
+        Assert.Equal("erms-subject-001", user.GetProperty("external_id").GetString());
+        Assert.Contains("FCR User", user.GetProperty("roles").EnumerateArray()
+            .Select(x => x.GetString()));
+
+        var update = await admin.PutAsJsonAsync($"/api/admin/fcr-users/{id}",
+            new Dictionary<string, object?> { ["roles"] = new[] { "FCR User", "FCR Admin" } });
+        Assert.Equal(HttpStatusCode.OK, update.StatusCode);
+        var updated = await Body(update);
+        var roles = updated.GetProperty("roles").EnumerateArray().Select(x => x.GetString()).ToList();
+        Assert.Contains("FCR Admin", roles);
+        Assert.DoesNotContain("Requester", roles);
     }
 
     [Fact]
