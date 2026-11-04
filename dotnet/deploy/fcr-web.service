@@ -8,7 +8,7 @@ User=fcr
 Group=fcr
 WorkingDirectory=/opt/fcr-web
 EnvironmentFile=-/etc/fcr-web/fcr-web.env
-ExecStart=/opt/fcr-web/FCR.Web
+ExecStart=/opt/fcr-web/FCR.Web --environment Production
 Restart=on-failure
 RestartSec=5
 Environment=ASPNETCORE_ENVIRONMENT=Production
