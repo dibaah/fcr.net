@@ -19,16 +19,19 @@ jobs:
       - name: Checkout .NET repository
         uses: actions/checkout@v4
 
-      # Schema/API parity tests use the legacy SQLite database as a test fixture.
-      # Keep the data in the Python repo; only materialize it temporarily in CI.
+      # API parity and standalone Web tests use legacy Python data/static fixtures.
+      # Keep those assets in fcr-python; materialize them only in CI.
       - name: Checkout Python baseline data
         uses: actions/checkout@v4
         with:
           repository: dibaah/fcr-python
+          ref: f6c5b3fd1423037d2886bd3522a1cfccbe75d42e
           path: python-baseline
 
-      - name: Prepare legacy DB test fixture
-        run: cp python-baseline/fcr_database.db ./fcr_database.db
+      - name: Prepare legacy test fixtures
+        run: |
+          cp python-baseline/fcr_database.db ./fcr_database.db
+          cp -R python-baseline/static ./static
 
       - name: Set up .NET SDK
         uses: actions/setup-dotnet@v4
