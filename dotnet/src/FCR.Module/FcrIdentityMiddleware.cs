@@ -31,7 +31,7 @@ public sealed class FcrIdentityMiddleware(RequestDelegate next)
 
         // Compatibility for standalone development cookies and hosts that
         // explicitly pass an existing FCR internal numeric ID.
-        if (user is null && long.TryParse(
+        if (user is null && options.Value.AllowLocalIdFallback && long.TryParse(
                 principal.FindFirst(ClaimTypes.NameIdentifier)?.Value, out var localId))
             user = await users.GetUserAsync(localId);
 
