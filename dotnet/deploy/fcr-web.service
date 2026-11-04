@@ -12,8 +12,8 @@ ExecStart=/opt/fcr-web/FCR.Web --environment Production
 Restart=on-failure
 RestartSec=5
 Environment=ASPNETCORE_ENVIRONMENT=Production
-# Config overrides can go in /etc/fcr-web/appsettings.Local.json (see deployment.md)
-# or as environment variables, e.g.:
+# Put config overrides in /etc/fcr-web/fcr-web.env (EnvironmentFile above).
+# The host environment is forced to Production by the ExecStart argument.
 # Environment=Fcr__DataDir=/var/lib/fcr/data
 # Environment=Fcr__HttpsCertPath=/etc/fcr-web/fcr-web.pfx
 # Environment=Fcr__HttpsCertPassword=<secret>
