@@ -147,7 +147,7 @@ public static class ApiEndpoints
         // ── Settings ────────────────────────────────────────────────────
         admin.MapGet("/settings", IResult (ISettingsStore settings) => Results.Ok(settings.Payload()));
 
-        api.MapPut("/settings", IResult (JsonObject body, ISettingsStore settings) =>
+        admin.MapPut("/settings", IResult (JsonObject body, ISettingsStore settings) =>
         {
             var current = settings.Load();
             var merged = System.Text.Json.JsonSerializer.SerializeToNode(current)!.AsObject();
