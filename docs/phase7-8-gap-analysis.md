@@ -1,55 +1,60 @@
-# Phase 7–8 Gap Analysis (Repository Review)
+# Phase 7–8 Gap Analysis
 
-Reviewed against `masterplan.md` on the `review-phase7-phase8-completion` branch.
+Reviewed against docs/MASTER_PLAN.md and the current .NET module implementation.
 
 ## Current evidence
 
-- Phase 6 workflow implementation exists in `RequestService`, `RequestEndpoints`, migration `AddPhase6ReviewWorkflow`, and `WorkflowTests`.
+- Phase 6 workflow implementation exists in RequestService, RequestEndpoints, migration AddPhase6ReviewWorkflow, and WorkflowTests.
 - Workflow decisions, comments, cycles, assignments, and notifications are persisted.
-- Review history is available through `GET /api/requests/{id}/history`.
-- Existing deployment assets include `dotnet/deploy/deploy.sh`, a systemd unit, and `docs/deployment.md`.
-- Current GitHub Actions workflow runs Python tests and builds the Python EXE; it does not run `dotnet restore/build/test`.
+- Review history is available through GET /api/requests/{id}/history.
+- .NET CI is active in .github/workflows/dotnet.yml. It restores, builds, and tests the .NET 8 solution; CI materializes the Python legacy database and static assets as pinned fixtures only.
+- Main commit 0c4f1f0d passed CI with 76/76 tests. Subsequent security/authorization changes are in PR #27 and require their own green CI before acceptance.
 
-## Phase 7 — implementation added; acceptance evidence still required
+## Phase 7 — implementation present; acceptance evidence still required
 
 | Master Plan item | Evidence / gap |
 |---|---|
-| Audit logging | Added `fcr_audit_logs`, EF mapping/migration, and middleware that records mutating API metadata (user, action/path, status, request ID, UTC timestamp). Request bodies/query strings are intentionally excluded. |
-| Workflow reporting | Added admin-only `/api/admin/reports/workflow-summary`, `/approval-statistics`, `/pending-reviews`, `/review-aging`, and `/user-activity` endpoints. |
-| User activity history | Backed by audit log; recent activity can be filtered by user and limited (max 500). |
-| Pending review reports | Added admin report endpoint and static admin report page `static/phase7-reports.html`. |
-| Approval statistics | Added counts by review action and approved/rejected/returned workflow totals. |
-| Dashboard integration | Existing frontend is served; requester/admin/reviewer frontend integration needs explicit end-to-end validation. |
-| Status separation | Request/workflow/FCR technical status are separate in the data model; tests should validate transitions and exports together. |
-| Report/export parity | Existing technical Excel exports exist; workflow reporting/export acceptance remains outstanding. |
-| Security testing | Auth tests exist, but production security acceptance (CSRF, upload content validation, secrets, SSO, threat review) remains outstanding. |
+| Audit logging | fcr_audit_logs migration and middleware record mutating API metadata (user, action/path, status, request ID, UTC timestamp). Request bodies/query strings are excluded. |
+| Workflow reporting | Admin-only workflow-summary, approval-statistics, pending-reviews, review-aging, and user-activity endpoints exist. |
+| User activity history | Backed by audit log; recent activity can be filtered by user and limited to 500. |
+| Pending review reports | Admin report endpoint and static report page exist. Actual ERMS UI wiring is external. |
+| Approval statistics | Counts by review action and approved/rejected/returned workflow totals exist. |
+| Dashboard integration | Standalone static frontend is a legacy/test fixture; requester/admin/reviewer screens need end-to-end validation in the actual ERMS UI. |
+| Status separation | Request/workflow/FCR technical statuses are separate; transitions and report/export consistency still need business validation. |
+| Report/export parity | Legacy Excel export exists; workflow reporting/export acceptance remains outstanding. |
+| Security testing | Automated tests cover authentication, authorization, identity mapping, role separation, and audit routes. CSRF/anti-forgery, upload content validation/scanning, production secrets/SSO, and threat review remain to be accepted by IT/security. |
 | UAT | No business acceptance evidence is committed. |
 
-## Phase 7 validation status\n\nImplementation is now present in the review branch, but Phase 7 is **not accepted as complete until the .NET CI run passes and business/security UAT validates report correctness, permissions, audit retention, and dashboard integration**. The report page is accessible at `/phase7-reports.html`; its APIs enforce the AdminConsole role server-side.\n\n## Phase 8 — production cutover is intentionally blocked
+## Phase 7 validation status
 
-The repo has a Phase 3 deployment script and rollback notes, but that is not proof of production cutover. The Master Plan explicitly requires company IT/business approval and prohibits production deployment without explicit authorization.
+Phase 7 is **not accepted as complete** until current .NET CI is green and business/security UAT validates report correctness, permissions, audit retention, attachment handling, and ERMS dashboard integration.
+
+## Phase 8 — production cutover is intentionally blocked
+
+The deployment script and rollback guide are operational aids, not proof of production readiness. The Master Plan explicitly requires company IT/business approval and prohibits production deployment without explicit authorization.
 
 Before cutover:
+
 1. Confirm approved .NET runtime and host OS.
-2. Confirm production database provider (SQLite is currently configured).
-3. Confirm production identity provider (local cookie login is development-only).
-4. Configure HTTPS/TLS and secrets outside source control.
-5. Confirm central attachment storage and backup retention.
-6. Run .NET build/test and security test suite in CI.
-7. Perform database + attachment backup and restore rehearsal.
-8. Test multi-user concurrency on the approved database.
-9. Verify data/attachment counts and workflow records.
-10. Obtain IT + business UAT approval.
+2. Confirm production database provider and multi-user concurrency strategy (SQLite is currently configured).
+3. Confirm production identity provider (AD/Entra) and ERMS stable claim.
+4. Configure HTTPS/TLS, proxy trust, and secrets outside source control.
+5. Confirm archive storage, service-account permissions, and backup retention.
+6. Run .NET build/test and security tests in CI.
+7. Rehearse database + attachment backup and restore.
+8. Test concurrency on the approved database.
+9. Reconcile data/attachment counts and workflow records.
+10. Obtain IT/security and business UAT approval.
 11. Schedule cutover and retain rollback assets.
 
-## Recommended next technical tasks
+## Recommended remaining technical work
 
-1. Add general audit entity, migration, service, and backend write points (request submission/admin edits, attachment actions, workflow config/submit/resubmit/decision, user/role changes, FCR CRUD).
-2. Add admin report endpoints: pending reviews, approval/rejection/return counts, review aging, and user activity.
-3. Add report tests and authorization tests.
-4. Add .NET restore/build/test to CI.
-5. Update deployment docs with the final production provider and identity configuration after IT decisions.
+1. Validate CSRF/anti-forgery behavior for cookie-authenticated mutating routes in the actual ERMS host.
+2. Validate file upload content type, malware scanning, and archive/download policies with IT/security.
+3. Confirm audit failure behavior and retention requirements.
+4. Complete end-to-end ERMS identity, UI, workflow, and archive-share tests.
+5. Revisit production database provider after IT concurrency/storage decision.
 
 ## Validation limitation
 
-This repository review was performed against GitHub source. The current environment did not have the .NET SDK, so no local .NET build or test execution was possible. Do not treat source inspection alone as passing test evidence.
+Repository source was reviewed through GitHub. The current execution environment does not provide a local .NET SDK; CI is the authoritative build/test evidence. Do not treat source inspection alone as passing evidence.
