@@ -21,14 +21,11 @@ public static class ApiEndpoints
         var admin = app.MapGroup("/api").RequireAuthorization(PolicyNames.AdminConsole);
 
         // ── Health / about ─────────────────────────────────────────────
-        api.MapGet("/health", IResult (IOptions<FcrOptions> o) => Results.Ok(new
+        // Public liveness endpoint intentionally exposes no filesystem/runtime details.
+        api.MapGet("/health", IResult () => Results.Ok(new
         {
             status = "ok",
             version = FcrConstants.AppVersion,
-            db = o.Value.DbPath,
-            data_dir = o.Value.DataDir,
-            dotnet = System.Runtime.InteropServices.RuntimeInformation.FrameworkDescription,
-            time = DateTime.Now.ToString("yyyy-MM-ddTHH:mm:ss"),
         })).AllowAnonymous();
 
         data.MapGet("/about", async Task<IResult> (IFcrRepository repo, IOptions<FcrOptions> o) =>
