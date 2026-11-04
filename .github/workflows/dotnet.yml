@@ -25,6 +25,7 @@ jobs:
         uses: actions/checkout@v4
         with:
           repository: dibaah/fcr-python
+          ref: f6c5b3fd1423037d2886bd3522a1cfccbe75d42e
           path: python-baseline
 
       - name: Prepare legacy test fixtures
