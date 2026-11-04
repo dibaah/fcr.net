@@ -33,6 +33,9 @@ jobs:
           cp python-baseline/fcr_database.db ./fcr_database.db
           cp -R python-baseline/static ./static
 
+      - name: Validate deployment script syntax
+        run: bash -n dotnet/deploy/deploy.sh
+
       - name: Set up .NET SDK
         uses: actions/setup-dotnet@v4
         with:
