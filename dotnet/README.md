@@ -34,7 +34,7 @@ an open IT decision in the master plan; swap `AddAuthentication` in `Program.cs`
 - `POST /api/auth/logout`, `GET /api/auth/me`
 - `GET /api/admin/roles`, `GET/POST/PUT /api/admin/users` — **System Administrator** role only
 - All other `/api/*` routes require an authenticated user; only `/api/health` stays anonymous
-- Roles: FCR User, Requester, FCR Admin, Reviewer, Approver, System Administrator (multi-role supported). ERMS external users are mapped by a stable subject claim to an FCR internal user record; FCR roles are loaded from the FCR database per request.
+- Roles: FCR User, Requester, FCR Admin, Reviewer, Approver, System Administrator (multi-role supported). FCR User can read legacy FCR records; FCR Admin/System Administrator manage legacy records, settings, exports, and backups. Requester/reviewer-only users use workflow routes and do not get legacy FCR data access. ERMS external users are mapped by a stable subject claim to an FCR internal user record; FCR roles are loaded from the FCR database per request.
 - Development-only first-run admin: `admin` / `Fcr:SeedAdminPassword` (default `admin`) — seeded only when the host environment is Development and the users table is empty. Production does not map local login/user-admin endpoints or seed this default account.
 - `OnValidatePrincipal` re-checks `is_active` and refreshes role claims per request — deactivation and
   role changes apply immediately to existing sessions
