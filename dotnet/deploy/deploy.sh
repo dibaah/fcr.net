@@ -4,10 +4,10 @@
 # build host, sudo on the target.
 set -euo pipefail
 
-SRC="\${SRC:-$(cd "$(dirname "$0")/../.." && pwd)}"
-INSTALL_DIR="\${INSTALL_DIR:-/opt/fcr-web}"
-DATA_DIR="\${DATA_DIR:-/var/lib/fcr/data}"
-SERVICE="\${SERVICE:-fcr-web}"
+SRC="${SRC:-$(cd "$(dirname "$0")/../.." && pwd)}"
+INSTALL_DIR="${INSTALL_DIR:-/opt/fcr-web}"
+DATA_DIR="${DATA_DIR:-/var/lib/fcr/data}"
+SERVICE="${SERVICE:-fcr-web}"
 
 echo "==> Publishing FCR.Web (framework-dependent, linux-x64)"
 (cd "$SRC/dotnet" && dotnet publish src/FCR.Web -c Release -o "$SRC/dotnet/out/fcr-web")
@@ -18,7 +18,7 @@ sudo systemctl stop "$SERVICE" || true
 echo "==> Safety backup of the database (service stopped)"
 if [ -f "$DATA_DIR/fcr_database.db" ]; then
     sudo mkdir -p "$DATA_DIR/backups"
-    sudo cp "$DATA_DIR/fcr_database.db" \\
+    sudo cp "$DATA_DIR/fcr_database.db" \
        "$DATA_DIR/backups/fcr_database_predeploy_$(date +%Y%m%d_%H%M%S).db"
 fi
 
@@ -47,7 +47,7 @@ sudo systemctl restart "$SERVICE"
 
 echo "==> Health check"
 sleep 3
-curl -fsS http://localhost:8080/health/ready && echo " OK" \\
+curl -fsS http://localhost:8080/health/ready && echo " OK" \
     || { echo " FAILED — check: journalctl -u $SERVICE -n 50"; exit 1; }
 
 echo "Deployed. Rollback: docs/deployment.md § Rollback"
