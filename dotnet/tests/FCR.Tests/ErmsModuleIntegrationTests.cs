@@ -72,6 +72,23 @@ public sealed class ErmsModuleIntegrationTests
                 new { subject = "ERMS-hosted request", justification = "Integration test",
                     description = "Exercise FCR inside the ERMS host pipeline." });
             Assert.Equal(HttpStatusCode.Created, submit.StatusCode);
+            // FCR User may read legacy records, but not mutate/administer them.
+            Assert.Equal(HttpStatusCode.OK, (await client.GetAsync("/api/fcr")).StatusCode);
+            Assert.Equal(HttpStatusCode.Forbidden,
+                (await client.PostAsJsonAsync("/api/fcr",
+                    new { fcr_subject = "Should be blocked", fcr_code = "FCR-EP-ME-998" })).StatusCode);
+
+            await using (var scope = app.Services.CreateAsyncScope())
+            {
+                var users = scope.ServiceProvider.GetRequiredService<IUserService>();
+                await users.CreateExternalUserAsync(new CreateExternalUserRequest(
+                    "erms-requester-only", "requester.only", "Requester Only",
+                    "requester.only@example.invalid", ["Requester"]));
+            }
+            client.DefaultRequestHeaders.Remove("X-ERMS-Subject");
+            client.DefaultRequestHeaders.Add("X-ERMS-Subject", "erms-requester-only");
+            Assert.Equal(HttpStatusCode.Forbidden, (await client.GetAsync("/api/fcr")).StatusCode);
+
         }
         finally
         {

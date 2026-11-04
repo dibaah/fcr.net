@@ -1,14 +1,13 @@
 # FCR .NET Migration — Solution
 
-Centralized ASP.NET Core successor to the Python/FastAPI app, built per `masterplan.md` Phases 1–2.
-The Python application at the repo root stays untouched and operational.
+The .NET 8 FCR module intended to run in-process inside the existing ERMS ASP.NET Core 8 host. The standalone `FCR.Web` app is a development/test harness; the Python edition lives in [dibaah/fcr-python](https://github.com/dibaah/fcr-python).
 
 ## Layout
 
 - `src/FCR.Domain` — entities (`Fcr`, `ImportLog`, `Meta`, `User`, `Role`, `UserRole`), `RoleNames`, constants, FCR-code + value-cleaning rules, status-color logic. No DB/HTTP dependencies.
 - `src/FCR.Application` — DTOs (`FcrRecordInput`, `FcrQuery`, bulk requests, auth DTOs), `IFcrRepository`, `IUserService`, `ISettingsStore`, `IStatsService`, `IExcelExportService`, `IFolderService`.
 - `src/FCR.Infrastructure` — EF Core (`FcrDbContext`), migrations, `DatabaseMigrator`, `LegacySchemaUpgrader`, `FcrRepository`, `UserService`, `UserSeeder`, `PasswordHasher` (PBKDF2), `JsonSettingsStore`, `FcrBackupService`, `StatsService`, `ExcelExportService` (ClosedXML + OpenXML chart injection), `FolderService`, `AutoOpsService` (60 s auto-backup/auto-export loop).
-- `src/FCR.Web` — ASP.NET Core host; runs `DatabaseMigrator` + `UserSeeder` at startup, maps the full `/api` surface, serves the existing SPA from `static/`, cookie auth + role authorization.
+- `src/FCR.Web` — standalone ASP.NET Core development/test host; runs migrations, serves static test/legacy SPA assets when provided, and exposes local cookie auth only in Development. ERMS production hosting uses `FCR.Module`.
 - `tests/FCR.Tests` — xUnit: schema-compatibility vs a copy of the real DB, repository parity, backup, code validation, HTTP contract parity (`ApiParityTests` via `WebApplicationFactory`), auth/RBAC (`AuthTests`).
 
 ## API parity
@@ -35,8 +34,8 @@ an open IT decision in the master plan; swap `AddAuthentication` in `Program.cs`
 - `POST /api/auth/logout`, `GET /api/auth/me`
 - `GET /api/admin/roles`, `GET/POST/PUT /api/admin/users` — **System Administrator** role only
 - All other `/api/*` routes require an authenticated user; only `/api/health` stays anonymous
-- Roles: FCR User, Requester, FCR Admin, Reviewer, Approver, System Administrator (multi-role supported). ERMS external users are mapped by a stable subject claim to an FCR internal user record; FCR roles are loaded from the FCR database per request.
-- First-run admin: `admin` / `Fcr:SeedAdminPassword` (default `admin`) — created only when `users` is empty
+- Roles: FCR User, Requester, FCR Admin, Reviewer, Approver, System Administrator (multi-role supported). FCR User can read legacy FCR records; FCR Admin/System Administrator manage legacy records, settings, exports, and backups. Requester/reviewer-only users use workflow routes and do not get legacy FCR data access. ERMS external users are mapped by a stable subject claim to an FCR internal user record; FCR roles are loaded from the FCR database per request.
+- Development-only first-run admin: `admin` / `Fcr:SeedAdminPassword` (default `admin`) — seeded only when the host environment is Development and the users table is empty. Production does not map local login/user-admin endpoints or seed this default account.
 - `OnValidatePrincipal` re-checks `is_active` and refreshes role claims per request — deactivation and
   role changes apply immediately to existing sessions
 - PBKDF2-SHA256 password hashes (`pbkdf2$iters$salt$hash`); never store plaintext
@@ -94,7 +93,7 @@ dotnet test
 
 ## Hosting (Phase 3)
 
-Kestrel binds `http://0.0.0.0:8080` (config section `Kestrel:Endpoints`, overridable by env `Kestrel__Endpoints__Http__Url`). HTTPS is opt-in: set `Fcr:HttpsCertPath` (PFX) + `Fcr:HttpsCertPassword` and the app also listens on `Fcr:HttpsPort` (8443). `Fcr:BehindProxy=true` enables `X-Forwarded-*` handling.
+Development binds `http://0.0.0.0:8080`. Production config binds HTTP to `127.0.0.1:8080` for a local reverse proxy. HTTPS is opt-in: set `Fcr:HttpsCertPath` (PFX) + `Fcr:HttpsCertPassword` and the app also listens on `Fcr:HttpsPort` (8443). `Fcr:BehindProxy=true` enables `X-Forwarded-*` handling; only enable it behind a trusted proxy.
 
 Probes: `GET /health/live` and `GET /health/ready` (executes `SELECT 1` on SQLite). Request logging via `Microsoft.AspNetCore.HttpLogging`. Deployment, HTTPS setup, firewall/multi-workstation checks and rollback: `../docs/deployment.md`; unit + script in `deploy/`.
 

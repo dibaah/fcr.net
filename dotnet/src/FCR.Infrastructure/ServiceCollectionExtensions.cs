@@ -29,6 +29,8 @@ public static class ServiceCollectionExtensions
             o.RequestAttachmentDir = config["Fcr:RequestAttachmentDir"] ?? o.RequestAttachmentDir;
             o.IdentityExternalIdClaim = config["Fcr:Identity:ExternalIdClaim"]
                 ?? o.IdentityExternalIdClaim;
+            o.AllowLocalIdFallback = bool.TryParse(config["Fcr:Identity:AllowLocalIdFallback"], out var allowLocalFallback)
+                && allowLocalFallback;
             o.BootstrapAdminExternalId = config["Fcr:BootstrapAdmin:ExternalId"];
             o.BootstrapAdminUsername = config["Fcr:BootstrapAdmin:Username"];
             o.BootstrapAdminDisplayName = config["Fcr:BootstrapAdmin:DisplayName"];

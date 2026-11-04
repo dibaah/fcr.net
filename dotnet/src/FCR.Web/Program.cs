@@ -45,6 +45,8 @@ builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationSc
         o.Cookie.Name = "fcr_auth";
         o.Cookie.HttpOnly = true;
         o.Cookie.SameSite = SameSiteMode.Lax;
+        o.Cookie.SecurePolicy = builder.Environment.IsDevelopment()
+            ? CookieSecurePolicy.SameAsRequest : CookieSecurePolicy.Always;
         o.ExpireTimeSpan = TimeSpan.FromHours(8);
         o.SlidingExpiration = true;
         o.Events.OnRedirectToLogin = ctx =>
@@ -87,9 +89,17 @@ using (var scope = app.Services.CreateScope())
 {
     var migrator = scope.ServiceProvider.GetRequiredService<DatabaseMigrator>();
     await migrator.MigrateAsync();
-    await UserSeeder.SeedAsync(
-        scope.ServiceProvider.GetRequiredService<FcrDbContext>(),
-        app.Configuration["Fcr:SeedAdminPassword"]);
+    var db = scope.ServiceProvider.GetRequiredService<FcrDbContext>();
+    if (app.Environment.IsDevelopment())
+    {
+        // Local demo account is intentionally limited to Development.
+        await UserSeeder.SeedAsync(db, app.Configuration["Fcr:SeedAdminPassword"]);
+    }
+    else
+    {
+        // Production standalone hosting must not create a default admin account.
+        await UserSeeder.SeedRolesAsync(db);
+    }
 }
 
 var staticDir = ResolveStaticDir(app.Configuration, app.Environment.ContentRootPath);
@@ -123,7 +133,8 @@ app.UseAuthentication();
 app.UseFcrModule();
 app.UseAuthorization();
 
-app.MapAuthApi(); // standalone development login; ERMS hosts do not map this endpoint.
+if (app.Environment.IsDevelopment())
+    app.MapAuthApi(); // local login/user admin is Development-only; ERMS uses host identity.
 app.MapFcrModule();
 
 await app.RunAsync();

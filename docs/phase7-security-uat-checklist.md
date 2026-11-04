@@ -9,6 +9,9 @@
 - [ ] Unmapped and inactive users cannot reuse upstream role claims (including `FCR Admin` / `System Administrator`) to bypass FCR authorization.
 - [ ] FCR role changes and user deactivation take effect on the next request.
 - [ ] ERMS FCR access permission gate denies module/API access before the user is permitted into FCR.
+- [ ] Requester-only/reviewer-only users cannot read or mutate legacy FCR records.
+- [ ] FCR User can read legacy records but cannot create/update/delete, bulk-edit, change settings, export, or access backups.
+- [ ] FCR Admin/System Administrator can perform approved legacy FCR administration.
 - [ ] Module startup/migration path does not create the standalone local development admin account.
 
 

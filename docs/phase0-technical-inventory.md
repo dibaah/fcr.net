@@ -1,4 +1,6 @@
-# Phase 0 — Technical Baseline & Inventory
+# Phase 0 — Legacy Python Technical Baseline & Inventory
+
+> Historical migration reference for the Python edition. Python source/runtime now lives in [dibaah/fcr-python](https://github.com/dibaah/fcr-python); this file is retained to document the baseline that the .NET port was compared against.
 
 **Scope:** Repository inspection per `masterplan.md` §10 Phase 0. No data or schema changes.
 **Date:** 2026-11-01 · **App version:** 2.0.0 · **Schema version:** 2 · **Baseline tests:** 61/61 pass

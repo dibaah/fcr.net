@@ -3,9 +3,12 @@ Description=FCR Dashboard (.NET) — centralized web service
 After=network.target
 
 [Service]
-Type=notify
+Type=simple
+User=fcr
+Group=fcr
 WorkingDirectory=/opt/fcr-web
-ExecStart=/opt/fcr-web/FCR.Web
+EnvironmentFile=-/etc/fcr-web/fcr-web.env
+ExecStart=/opt/fcr-web/FCR.Web --environment Production
 Restart=on-failure
 RestartSec=5
 Environment=ASPNETCORE_ENVIRONMENT=Production

@@ -19,6 +19,9 @@ public sealed class FcrOptions
     /// <summary>Claim carrying the stable ERMS subject key mapped to FCR users.external_id.</summary>
     public string IdentityExternalIdClaim { get; set; } = ClaimTypes.NameIdentifier;
 
+    /// <summary>Permit numeric NameIdentifier fallback only for standalone development auth.</summary>
+    public bool AllowLocalIdFallback { get; set; }
+
     /// <summary>Optional one-time bootstrap ERMS subject for the first FCR Admin.</summary>
     public string? BootstrapAdminExternalId { get; set; }
     public string? BootstrapAdminUsername { get; set; }

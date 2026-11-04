@@ -149,7 +149,8 @@ public class AuthTests(ApiParityTests.Fixture fixture)
 
         var c = await Login("plainuser", "pass1234");
         Assert.NotNull(c);
-        Assert.Equal(HttpStatusCode.OK, (await c.GetAsync("/api/fcr")).StatusCode);        // authenticated OK
+        Assert.Equal(HttpStatusCode.OK, (await c.GetAsync("/api/requests")).StatusCode); // requester module access
+        Assert.Equal(HttpStatusCode.Forbidden, (await c.GetAsync("/api/fcr")).StatusCode);
         Assert.Equal(HttpStatusCode.Forbidden, (await c.GetAsync("/api/admin/users")).StatusCode);
         Assert.Equal(HttpStatusCode.Forbidden, (await c.GetAsync("/api/admin/roles")).StatusCode);
         var escalation = await c.PostAsJsonAsync("/api/admin/users", new Dictionary<string, object?>
@@ -232,11 +233,12 @@ public class AuthTests(ApiParityTests.Fixture fixture)
 
         var c = await Login("exuser", "pass1234");
         Assert.NotNull(c);
-        Assert.Equal(HttpStatusCode.OK, (await c.GetAsync("/api/fcr")).StatusCode);
+        Assert.Equal(HttpStatusCode.OK, (await c.GetAsync("/api/requests")).StatusCode);
+        Assert.Equal(HttpStatusCode.Forbidden, (await c.GetAsync("/api/fcr")).StatusCode);
 
         await admin.PutAsJsonAsync($"/api/admin/users/{id}",
             new Dictionary<string, object?> { ["is_active"] = false });
-        Assert.Equal(HttpStatusCode.Unauthorized, (await c.GetAsync("/api/fcr")).StatusCode);
+        Assert.Equal(HttpStatusCode.Unauthorized, (await c.GetAsync("/api/requests")).StatusCode);
         Assert.Null(await Login("exuser", "pass1234"));
     }
 }
