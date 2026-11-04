@@ -39,6 +39,9 @@ public static class FcrModuleExtensions
 
             options.AddPolicy(PolicyNames.AdminConsole,
                 policy => policy.RequireRole(RoleNames.FcrAdmin, RoleNames.SystemAdministrator));
+            options.AddPolicy(PolicyNames.FcrDataAccess,
+                policy => policy.RequireRole(RoleNames.FcrUser, RoleNames.FcrAdmin,
+                    RoleNames.SystemAdministrator));
             options.AddPolicy(PolicyNames.RequesterAccess,
                 policy => policy.RequireRole(RoleNames.Requester, RoleNames.SystemAdministrator));
             options.AddPolicy(PolicyNames.ReviewerAccess,
