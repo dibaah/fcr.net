@@ -17,6 +17,8 @@ public static class ApiEndpoints
     public static void MapApi(this WebApplication app)
     {
         var api = app.MapGroup("/api").RequireAuthorization(PolicyNames.FcrModuleAccess);
+        var data = app.MapGroup("/api").RequireAuthorization(PolicyNames.FcrDataAccess);
+        var admin = app.MapGroup("/api").RequireAuthorization(PolicyNames.AdminConsole);
 
         // ── Health / about ─────────────────────────────────────────────
         api.MapGet("/health", IResult (IOptions<FcrOptions> o) => Results.Ok(new
@@ -29,7 +31,7 @@ public static class ApiEndpoints
             time = DateTime.Now.ToString("yyyy-MM-ddTHH:mm:ss"),
         })).AllowAnonymous();
 
-        api.MapGet("/about", async Task<IResult> (IFcrRepository repo, IOptions<FcrOptions> o) =>
+        data.MapGet("/about", async Task<IResult> (IFcrRepository repo, IOptions<FcrOptions> o) =>
             Results.Ok(new
             {
                 app_name = FcrConstants.AppName,
@@ -46,7 +48,7 @@ public static class ApiEndpoints
             }));
 
         // ── FCR CRUD ────────────────────────────────────────────────────
-        api.MapGet("/fcr", async Task<IResult> (IFcrRepository repo, IFolderService folders,
+        data.MapGet("/fcr", async Task<IResult> (IFcrRepository repo, IFolderService folders,
             string? search, string? pedec_status, string? fcr_status, string? exec_status,
             string? category, string? status_group, string? sort_by, string? sort_order) =>
         {
@@ -59,14 +61,14 @@ public static class ApiEndpoints
             catch (FcrValidationException ex) { return Detail(400, ex.Message); }
         });
 
-        api.MapGet("/fcr/{id:long}", async Task<IResult> (long id, IFcrRepository repo, IFolderService folders) =>
+        data.MapGet("/fcr/{id:long}", async Task<IResult> (long id, IFcrRepository repo, IFolderService folders) =>
         {
             var rec = await repo.GetAsync(id);
             return rec is null ? Detail(404, "FCR not found")
                 : Results.Ok(FcrJson.ToDict(rec, folders.GenerateFolderPath(rec.FcrCode)));
         });
 
-        api.MapPost("/fcr", async Task<IResult> (FcrRecordInput input, IFcrRepository repo, IFolderService folders) =>
+        admin.MapPost("/fcr", async Task<IResult> (FcrRecordInput input, IFcrRepository repo, IFolderService folders) =>
         {
             try
             {
@@ -78,7 +80,7 @@ public static class ApiEndpoints
             catch (FcrDuplicateCodeException ex) { return Detail(409, ex.Message); }
         });
 
-        api.MapPut("/fcr/{id:long}", async Task<IResult> (long id, FcrRecordInput input,
+        admin.MapPut("/fcr/{id:long}", async Task<IResult> (long id, FcrRecordInput input,
             IFcrRepository repo, IFolderService folders) =>
         {
             try
@@ -91,12 +93,12 @@ public static class ApiEndpoints
             catch (FcrDuplicateCodeException ex) { return Detail(409, ex.Message); }
         });
 
-        api.MapDelete("/fcr/{id:long}", async Task<IResult> (long id, IFcrRepository repo) =>
+        admin.MapDelete("/fcr/{id:long}", async Task<IResult> (long id, IFcrRepository repo) =>
             await repo.DeleteAsync(id)
                 ? Results.Ok(new Dictionary<string, object?> { ["deleted"] = id })
                 : Detail(404, "FCR not found"));
 
-        api.MapPost("/fcr/bulk-save", async Task<IResult> (BulkSaveRequest req, IFcrRepository repo) =>
+        admin.MapPost("/fcr/bulk-save", async Task<IResult> (BulkSaveRequest req, IFcrRepository repo) =>
         {
             var result = await repo.BulkSaveAsync(req.Records);
             return Results.Ok(new Dictionary<string, object?>
@@ -105,30 +107,30 @@ public static class ApiEndpoints
             });
         });
 
-        api.MapPost("/fcr/bulk-delete", async Task<IResult> (BulkDeleteRequest req, IFcrRepository repo) =>
+        admin.MapPost("/fcr/bulk-delete", async Task<IResult> (BulkDeleteRequest req, IFcrRepository repo) =>
             Results.Ok(new Dictionary<string, object?> { ["deleted"] = await repo.BulkDeleteAsync(req.Ids) }));
 
         // ── Stats / options / notifications ────────────────────────────
-        api.MapGet("/stats", IResult (IStatsService stats) => Results.Ok(stats.GetStats()));
-        api.MapGet("/options", IResult (IStatsService stats) => Results.Ok(stats.GetOptions()));
-        api.MapGet("/notifications", IResult (IStatsService stats) => Results.Ok(stats.GetNotifications()));
+        data.MapGet("/stats", IResult (IStatsService stats) => Results.Ok(stats.GetStats()));
+        data.MapGet("/options", IResult (IStatsService stats) => Results.Ok(stats.GetOptions()));
+        data.MapGet("/notifications", IResult (IStatsService stats) => Results.Ok(stats.GetNotifications()));
 
         // ── Export ──────────────────────────────────────────────────────
-        api.MapGet("/export", IResult (IExcelExportService excel) =>
+        admin.MapGet("/export", IResult (IExcelExportService excel) =>
         {
             var bytes = excel.BuildExport(withCharts: false);
             return bytes is null ? Detail(404, "No records to export")
                 : Results.File(bytes, XlsxType, $"FCR_Export_{DateTime.Now:yyyy-MM-dd}.xlsx");
         });
 
-        api.MapGet("/export-with-charts", IResult (IExcelExportService excel) =>
+        admin.MapGet("/export-with-charts", IResult (IExcelExportService excel) =>
         {
             var bytes = excel.BuildExport(withCharts: true);
             return bytes is null ? Detail(404, "No records to export")
                 : Results.File(bytes, XlsxType, $"FCR_Report_{DateTime.Now:yyyy-MM-dd}.xlsx");
         });
 
-        api.MapPost("/auto-export/run", IResult (IExcelExportService excel, ISettingsStore settings) =>
+        admin.MapPost("/auto-export/run", IResult (IExcelExportService excel, ISettingsStore settings) =>
         {
             var s = settings.Load();
             var dir = settings.ResolveUserPath(s.AutoExportLocation, "exports");
@@ -143,7 +145,7 @@ public static class ApiEndpoints
         });
 
         // ── Settings ────────────────────────────────────────────────────
-        api.MapGet("/settings", IResult (ISettingsStore settings) => Results.Ok(settings.Payload()));
+        admin.MapGet("/settings", IResult (ISettingsStore settings) => Results.Ok(settings.Payload()));
 
         api.MapPut("/settings", IResult (JsonObject body, ISettingsStore settings) =>
         {
@@ -172,7 +174,7 @@ public static class ApiEndpoints
             return Results.Ok(settings.Payload());
         });
 
-        api.MapPost("/settings/reset", IResult (ISettingsStore settings) =>
+        admin.MapPost("/settings/reset", IResult (ISettingsStore settings) =>
         {
             try
             {
@@ -186,16 +188,16 @@ public static class ApiEndpoints
         });
 
         // ── Backup ──────────────────────────────────────────────────────
-        api.MapPost("/backup", async Task<IResult> (FcrBackupService backups) =>
+        admin.MapPost("/backup", async Task<IResult> (FcrBackupService backups) =>
         {
             try { return Results.Ok(await backups.CreateBackupAsync()); }
             catch (Exception exc) { return Detail(500, $"Backup failed: {exc.Message}"); }
         });
 
-        api.MapGet("/backups", IResult (FcrBackupService backups) => Results.Ok(backups.ListBackups()));
+        admin.MapGet("/backups", IResult (FcrBackupService backups) => Results.Ok(backups.ListBackups()));
 
         // ── Folders ─────────────────────────────────────────────────────
-        api.MapGet("/fcr/{id:long}/open-folder", async Task<IResult> (long id, IFcrRepository repo, IFolderService folders) =>
+        admin.MapGet("/fcr/{id:long}/open-folder", async Task<IResult> (long id, IFcrRepository repo, IFolderService folders) =>
         {
             var rec = await repo.GetAsync(id);
             if (rec is null) return Detail(404, "FCR not found");
@@ -212,7 +214,7 @@ public static class ApiEndpoints
             return Results.Ok(new { ok = true, path });
         });
 
-        api.MapPost("/fcr/{id:long}/create-folder", async Task<IResult> (long id, IFcrRepository repo, IFolderService folders) =>
+        admin.MapPost("/fcr/{id:long}/create-folder", async Task<IResult> (long id, IFcrRepository repo, IFolderService folders) =>
         {
             var rec = await repo.GetAsync(id);
             if (rec is null) return Detail(404, "FCR not found");
