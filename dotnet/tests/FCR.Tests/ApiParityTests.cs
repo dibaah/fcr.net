@@ -78,6 +78,8 @@ public class ApiParityTests : IClassFixture<ApiParityTests.Fixture>, IAsyncLifet
         var health = await Body(await _client.GetAsync("/api/health"));
         Assert.Equal("ok", health.GetProperty("status").GetString());
         Assert.Equal("2.0.0", health.GetProperty("version").GetString());
+        Assert.False(health.TryGetProperty("db", out _));
+        Assert.False(health.TryGetProperty("data_dir", out _));
 
         var about = await Body(await _client.GetAsync("/api/about"));
         Assert.Equal(145, about.GetProperty("records").GetInt32());
